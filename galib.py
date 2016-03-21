@@ -1,6 +1,8 @@
 import random
 from db import *
 
+WORKTIME = 420
+
 """
     def randint(self, a, b):
         ""Return random integer in range [a, b], including both end points.
@@ -54,6 +56,7 @@ class GeAl:
     """
     Main Genetic Algorithm Methods
     """
+    _pop_size = 0
     _max_generations = 0
     _optimal_fitness = 0
     _generation = None
@@ -65,7 +68,7 @@ class GeAl:
     def __init__(self, optimal, lifetime, popsize):
         self._max_generations = lifetime
         self._optimal_fitness = optimal
-        self._generation = [Chromosome() for x in range(popsize)]
+        self._pop_size = popsize
 
 
     def prepare_pop(self):
@@ -75,22 +78,33 @@ class GeAl:
             total engineers
         :return:-1 if no records found, 0 otherwise
         """
+        pass
+        '''
         db = DataBase()
-
         self._total_jobs_nr = db.query("Select * from jobs")
         self._jobs_data = db.fetch()
-
         self._total_engineer_nr = db.query("Select * from engineers")
         self._engineers_data = db.fetch()
-
         if (self._total_jobs_nr and self._total_engineer_nr) == 0:
             return -1
         else:
             return 0
+        '''
+
 
     def generate_pop(self):
+        """
+        Generate initial population
+        :return:
+        """
+        # Generate empty population
+        self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
+                            for x in range(self._pop_size)]
+        generation = self._generation
+
+        '''
         chromos, chromo = [], []
-        for each_individual in
+        for each_individual in generation[].
 
         for eachChromo in range(self._pop_size):
             chromo = []
@@ -98,8 +112,11 @@ class GeAl:
             chromo.append(random.randint(0,1))
             chromos.append(chromo)
         return chromos
+        '''
 
     def roulette(self, fitness_scores):
+        #TODO: 'roulette' method
+        '''
         index = 0
         cumalativeFitness = 0.0
         r = random.random()
@@ -109,8 +126,9 @@ class GeAl:
 
         if cumalativeFitness > r: # in the event of cumalative fitness becoming greater than r, return index of that chromo
             return i
-
+'''
     def crossover(self):
+        #TODO: 'crossover' method
         pass
 
 
@@ -123,48 +141,13 @@ class Chromosome:
 
     def __init__(self, workforce, jobs):
         self.jobs = [0 for x in range(jobs)]
-        self.engineers = [0 for x in range(workforce)]
+        self.engineers = [WORKTIME for x in range(workforce)]
         self.dummy_engineer = [self._total_jobs, self._total_duration]
 
     def evaluate(self):
+        #TODO: 'evaluate' method
         pass
 
     def mutate(self):
+        #TODO: 'mutate' method
         pass
-
-
-
-
-
-
-for ggeneration in range(MAX_GENERATIONS):
-    # calculate fitness values and put these values, along with
-    # the individuals, in a new "weighted" list
-    weighted_population = []
-    for individual in population:
-        fitness_val = fitness(individual)
-        weighted_population.append((individual, fitness_val))
-
-    # select two individuals to breed; individuals with higher
-    # fitness values are more likely to be selected
-    ind1 = weighted_choice(weighted_population)
-    ind2 = weighted_choice(weighted_population)
-
-    ind3 = crossover(ind1, ind2) # breed, creating a new individual
-    mutate(ind3) # do some random mutating
-    population.append(ind3)
-
-    # maybe the parents die? this is just one of many parameters in a
-    # GA algorithm
-    population.remove(ind1)
-    population.remove(ind2)
-
-# generations are completed; find maximum fitness individual
-max_fit = fitness(population[0])
-max_fit_individual = population[0]
-for individual in population:
-    fitness_val = fitness(individual)
-    if fitness_val > max_fit:
-        max_fit = fitness_val
-        max_fit_individual = individual
-print max_fit_individual
