@@ -1,4 +1,5 @@
 import random
+from db import *
 
 """
     def randint(self, a, b):
@@ -56,14 +57,41 @@ class GeAl:
     _max_generations = 0
     _optimal_fitness = 0
     _generation = None
+    _total_jobs_nr = 0
+    _total_engineer_nr = 0
+    _jobs_data = []
+    _engineers_data = []
 
     def __init__(self, optimal, lifetime, popsize):
         self._max_generations = lifetime
         self._optimal_fitness = optimal
         self._generation = [Chromosome() for x in range(popsize)]
 
+
+    def prepare_pop(self):
+        """
+        Get data:
+            total jobs
+            total engineers
+        :return:-1 if no records found, 0 otherwise
+        """
+        db = DataBase()
+
+        self._total_jobs_nr = db.query("Select * from jobs")
+        self._jobs_data = db.fetch()
+
+        self._total_engineer_nr = db.query("Select * from engineers")
+        self._engineers_data = db.fetch()
+
+        if (self._total_jobs_nr and self._total_engineer_nr) == 0:
+            return -1
+        else:
+            return 0
+
     def generate_pop(self):
         chromos, chromo = [], []
+        for each_individual in
+
         for eachChromo in range(self._pop_size):
             chromo = []
         for bit in range(genesPerCh * 4):

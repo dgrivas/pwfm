@@ -9,6 +9,8 @@ POPSIZE = 20  # population size
 def main():
     # Create main GA object
     ga = GeAl(OPTIMAL_FITNESS, LIFETIME, POPSIZE)
+
+    ga.prepare_pop() # get total jobs, engineers from db
     generation = ga.generate_pop()  # generate new population of random chromosomes
 
     iterations = 0

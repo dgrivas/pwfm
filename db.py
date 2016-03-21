@@ -15,5 +15,11 @@ class DataBase:
     def query(self, query):
         return self._db_cur.execute(query)  # Returns long integer rows affected, if any
 
+    def fetch(self, nr=0):
+        if nr==0:
+            return self._db_cur.fetchall()
+        else:
+            return self._db_cur.fetchmany(nr)
+
     def __del__(self):
         self._db_connection.close()
