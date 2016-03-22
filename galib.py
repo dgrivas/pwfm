@@ -60,6 +60,7 @@ class GeAl:
     _max_generations = 0
     _optimal_fitness = 0
     _generation = None
+    _jobid_key = []
     _total_jobs_nr = 0
     _total_engineer_nr = 0
     _jobs_data = []
@@ -76,8 +77,10 @@ class GeAl:
         Get data:
             total jobs
             total engineers
+        Create Job's id key array
         :return:-1 if no records found, 0 otherwise
         """
+        #TODO: Create Job's id key array
         pass
         '''
         db = DataBase()
