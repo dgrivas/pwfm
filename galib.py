@@ -54,17 +54,17 @@ WORKTIME = 420
 
 class GeAl:
     """
-    Main Genetic Algorithm Methods
+    Main Genetic Algorithm Methods.
     """
-    _pop_size = 0
-    _max_generations = 0
-    _optimal_fitness = 0
-    _generation = None
-    _jobid_key = []
-    _total_jobs_nr = 0
-    _total_engineer_nr = 0
-    _jobs_data = []
-    _engineers_data = []
+    _pop_size = 0               # Population size
+    _max_generations = 0        # Maximum generations to run GA
+    _optimal_fitness = 0        # Optimal fitness to stop GA
+    _generation = None          # Current generation
+    _jobid_key = []             # Job id to array (key index)
+    _total_jobs_nr = 0          # Number of total jobs
+    _total_engineer_nr = 0      # Number of total engineers
+    _jobs_data = []             # Jobs from db
+    _engineers_data = []        # Engineers from db
 
     def __init__(self, optimal, lifetime, popsize):
         self._max_generations = lifetime
@@ -76,7 +76,8 @@ class GeAl:
         """
         Get data:
             total jobs
-            total engineers
+            total engineers.
+
         Create Job's id key array
         :return:-1 if no records found, 0 otherwise
         """
@@ -97,7 +98,8 @@ class GeAl:
 
     def generate_pop(self):
         """
-        Generate initial population
+        Generate initial population.
+
         :return:
         """
         # Generate empty population
@@ -106,6 +108,11 @@ class GeAl:
         generation = self._generation
 
         chromos, chromo = [], []
+        for individual in generation:
+            for id, job in zip(self.key, individual.jobs):
+                print("id: %s,\tjob: %s\n" % (id, job))
+                # TODO: get random engineer for job
+
         for individual in generation:
             for job in individual.jobs:
 
