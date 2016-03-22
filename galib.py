@@ -102,6 +102,10 @@ class GeAl:
                             for x in range(self._pop_size)]
         generation = self._generation
 
+        chromos, chromo = [], []
+        for individual in generation:
+            for job in individual.jobs:
+
         '''
         chromos, chromo = [], []
         for each_individual in generation[].
