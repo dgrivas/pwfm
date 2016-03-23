@@ -10,10 +10,13 @@ def main():
     # Create main GA object
     ga = GeAl(OPTIMAL_FITNESS, LIFETIME, POPSIZE)
 
-    ga.prepare_pop() # get total jobs, engineers from db
-    generation = ga.generate_pop()  # generate new population of random chromosomes
+    ga.prepare_pop()   # get total jobs, engineers from db
+    ga.generate_pop()  # generate new population of random chromosomes
+    # print ga._generation
 
-    iterations = 0
+    print("Initial population ok!")
+
+    # iterations = 0
 '''
     while iterations != LIFETIME and solution_found != True:
         # take the pop of random chromos and rank them based on their fitness score/proximity to target output

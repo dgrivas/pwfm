@@ -1,3 +1,6 @@
+from db import *
+import random
+
 WORKTIME = 420
 
 class Chromosome:
@@ -23,7 +26,8 @@ class Ga:
         # chromos, chromo = [], []
         for individual in generation:
             for id, job in zip(self.key, individual.jobs):
-                print("id: %s,\tjob: %s\n" % (id, job))
+                pass
+                # print("id: %s,\tjob: %s\n" % (id, job))
 
         # [[row[i] for row in matrix] for i in range(4)]
         # for x, y in zip(a, b):
@@ -31,7 +35,24 @@ class Ga:
 def main():
     ga = Ga()
     ga.start()
-    print ga.generation[0].engineers
+    db = DataBase()
+    # print ga.generation[0].engineers
+    db.query("Select * from job")
+    jobs_data = db.fetch()
+    jobid_key = [jid[0] for jid in jobs_data]  # get job id for key array
+
+    # jobid_key = jobs_data[0]  # get job id for key array
+    print jobs_data
+    print jobid_key
+
+def main1():
+    db = DataBase()
+    data = []
+    data = db.get_random_eng(2)
+    #data = [x[0] for x in engs]
+    rnd = random.choice(data)
+    print data
+    print("Random eng: %s" % rnd)
 
 
 if __name__ == "__main__":

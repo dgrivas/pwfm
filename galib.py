@@ -1,4 +1,4 @@
-import random
+# import random
 from db import *
 
 WORKTIME = 420
@@ -55,12 +55,15 @@ WORKTIME = 420
 class GeAl:
     """
     Main Genetic Algorithm Methods.
+
     """
+    # Class variables:
+    _db = None
     _pop_size = 0               # Population size
     _max_generations = 0        # Maximum generations to run GA
     _optimal_fitness = 0        # Optimal fitness to stop GA
     _generation = None          # Current generation
-    _jobid_key = []             # Job id to array (key index)
+    _jobid_key = []             # Job inxed to id array (key index)
     _total_jobs_nr = 0          # Number of total jobs
     _total_engineer_nr = 0      # Number of total engineers
     _jobs_data = []             # Jobs from db
@@ -71,7 +74,6 @@ class GeAl:
         self._optimal_fitness = optimal
         self._pop_size = popsize
 
-
     def prepare_pop(self):
         """
         Get data:
@@ -81,20 +83,18 @@ class GeAl:
         Create Job's id key array
         :return:-1 if no records found, 0 otherwise
         """
-        #TODO: Create Job's id key array
-        pass
-        '''
-        db = DataBase()
-        self._total_jobs_nr = db.query("Select * from jobs")
-        self._jobs_data = db.fetch()
-        self._total_engineer_nr = db.query("Select * from engineers")
-        self._engineers_data = db.fetch()
-        if (self._total_jobs_nr and self._total_engineer_nr) == 0:
-            return -1
-        else:
-            return 0
-        '''
 
+        self._db = DataBase()
+        self._total_jobs_nr = self._db.query("Select * from job")
+        self._jobs_data = self._db.fetch()
+        self._jobid_key = [jid[0] for jid in self._jobs_data]  # get job id for key array
+        # self._jobid_key = self._jobs_data[0]  # get job id for key array
+        self._total_engineer_nr = self._db.query("Select * from engineer")
+        self._engineers_data = self._db.fetch()
+        if (self._total_jobs_nr and self._total_engineer_nr) == 0:
+            return False
+        else:
+            return True
 
     def generate_pop(self):
         """
@@ -105,16 +105,24 @@ class GeAl:
         # Generate empty population
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
-        generation = self._generation
+        # print [[x.jobs[i] for x in self._generation] for i in range(20)]
+        # chromos, chromo = [], []
+        # for individual in self._generation:
+        #     for jid, job_assign in zip(self._jobid_key, individual.jobs):
+        #         print("id: %s,\tjob_eng: %s\n" % (jid, job_assign))
+        #         job_assign = self._db.get_random_eng(jid)
+        #         print("Assignment: id: %s,\tjob_eng: %s\n" % (jid, job_assign))
 
-        chromos, chromo = [], []
-        for individual in generation:
-            for id, job in zip(self.key, individual.jobs):
-                print("id: %s,\tjob: %s\n" % (id, job))
-                # TODO: get random engineer for job
+        for ind in range(len(self._generation)):
+            for gene in range(len(self._generation[ind].jobs)):
+                # get job id from index
+                jid = self._jobid_key[gene]
+                # select random engineer from job's CanDo list
+                engineer = self._db.get_random_eng(jid)
+                # set engineer for job
+                self._generation[ind].jobs[gene] = engineer
 
-        for individual in generation:
-            for job in individual.jobs:
+        print [[x.jobs[i] for x in self._generation] for i in range(20)]
 
         '''
         chromos, chromo = [], []
@@ -154,7 +162,10 @@ class Chromosome:
     _total_jobs = 0
 
     def __init__(self, workforce, jobs):
+        # Main chromosome array. Contains selected engineer for each job
+        # Each position in array represents a job, indexed in Job index to id array (key index)
         self.jobs = [0 for x in range(jobs)]
+        # Array to hold engineer's worktime; updated after each assignment
         self.engineers = [WORKTIME for x in range(workforce)]
         self.dummy_engineer = [self._total_jobs, self._total_duration]
 
