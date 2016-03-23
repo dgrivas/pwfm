@@ -114,30 +114,19 @@ class GeAl:
         #         print("Assignment: id: %s,\tjob_eng: %s\n" % (jid, job_assign))
 
         for ind in range(len(self._generation)):
-            for gene in range(len(self._generation[ind].jobs)):
+            for gene in range(len(self._generation[ind].assignment)):
                 # get job id from index
                 jid = self._jobid_key[gene]
                 # select random engineer from job's CanDo list
                 engineer = self._db.get_random_eng(jid)
                 # set engineer for job
-                self._generation[ind].jobs[gene] = engineer
+                self._generation[ind].assignment[gene] = engineer
 
-        print [[x.jobs[i] for x in self._generation] for i in range(20)]
-
-        '''
-        chromos, chromo = [], []
-        for each_individual in generation[].
-
-        for eachChromo in range(self._pop_size):
-            chromo = []
-        for bit in range(genesPerCh * 4):
-            chromo.append(random.randint(0,1))
-            chromos.append(chromo)
-        return chromos
-        '''
+        print [[x.assignment[i] for x in self._generation] for i in range(20)]
 
     def roulette(self, fitness_scores):
-        #TODO: 'roulette' method
+        # TODO: 'roulette' method
+        pass
         '''
         index = 0
         cumalativeFitness = 0.0
@@ -150,13 +139,16 @@ class GeAl:
             return i
 '''
     def crossover(self):
-        #TODO: 'crossover' method
+        # TODO: 'crossover' method
         pass
 
 
 class Chromosome:
     """
-    chromosome structure definition
+    chromosome structure definition.
+
+    Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
+                        array worktime, len = No of engineers, value = engineers total worktime
     """
     _total_duration = 0
     _total_jobs = 0
@@ -164,15 +156,15 @@ class Chromosome:
     def __init__(self, workforce, jobs):
         # Main chromosome array. Contains selected engineer for each job
         # Each position in array represents a job, indexed in Job index to id array (key index)
-        self.jobs = [0 for x in range(jobs)]
+        self.assignment = [0 for x in range(jobs)]
         # Array to hold engineer's worktime; updated after each assignment
-        self.engineers = [WORKTIME for x in range(workforce)]
+        self.worktime = [WORKTIME for x in range(workforce)]
         self.dummy_engineer = [self._total_jobs, self._total_duration]
 
     def evaluate(self):
-        #TODO: 'evaluate' method
+        # TODO: 'evaluate' method
         pass
 
     def mutate(self):
-        #TODO: 'mutate' method
+        # TODO: 'mutate' method
         pass
