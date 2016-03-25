@@ -1,4 +1,4 @@
-from db import *
+from class_db import *
 import random
 
 WORKTIME = 420

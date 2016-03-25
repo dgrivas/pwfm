@@ -1,6 +1,6 @@
 #from __future__ import print_function
-from db import *
-from galib import *
+from class_db import *
+from class_galib import *
 
 OPTIMAL_FITNESS = 100
 LIFETIME = 100  # max GA iterations

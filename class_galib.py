@@ -1,7 +1,8 @@
 # import random
-from db import *
+from class_db import *
 
 WORKTIME = 420
+TRAVELTIME = 15
 
 """
     def randint(self, a, b):
@@ -63,9 +64,11 @@ class GeAl:
     _max_generations = 0        # Maximum generations to run GA
     _optimal_fitness = 0        # Optimal fitness to stop GA
     _generation = None          # Current generation
-    _jobid_key = []             # Job inxed to id array (key index)
+    _jobid_key = []             # Job index to id array (key index)
+    _engid_key = []             # Engineer index to id array (key index)
     _total_jobs_nr = 0          # Number of total jobs
     _total_engineer_nr = 0      # Number of total engineers
+    _duration_dictionary = {}   # Dictionary with {job_id : job_duration}
     _jobs_data = []             # Jobs from db
     _engineers_data = []        # Engineers from db
 
@@ -80,17 +83,20 @@ class GeAl:
             total jobs
             total engineers.
 
-        Create Job's id key array
-        :return:-1 if no records found, 0 otherwise
+        Create key arrays for Job's & Engineer's id
+        :return: False if no records found, True otherwise
         """
 
         self._db = DataBase()
         self._total_jobs_nr = self._db.query("Select * from job")
         self._jobs_data = self._db.fetch()
+        # print self._jobs_data
         self._jobid_key = [jid[0] for jid in self._jobs_data]  # get job id for key array
-        # self._jobid_key = self._jobs_data[0]  # get job id for key array
+        for job in self._jobs_data:
+            self._duration_dictionary[job[0]] = job[2]  # get job_id:duration in dictionary
         self._total_engineer_nr = self._db.query("Select * from engineer")
         self._engineers_data = self._db.fetch()
+        self._engid_key = [eid[0] for eid in self._engineers_data]  # get engineer id for key array
         if (self._total_jobs_nr and self._total_engineer_nr) == 0:
             return False
         else:
@@ -105,14 +111,7 @@ class GeAl:
         # Generate empty population
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
-        # print [[x.jobs[i] for x in self._generation] for i in range(20)]
-        # chromos, chromo = [], []
-        # for individual in self._generation:
-        #     for jid, job_assign in zip(self._jobid_key, individual.jobs):
-        #         print("id: %s,\tjob_eng: %s\n" % (jid, job_assign))
-        #         job_assign = self._db.get_random_eng(jid)
-        #         print("Assignment: id: %s,\tjob_eng: %s\n" % (jid, job_assign))
-
+        print ("Population size: %s" % self._pop_size)
         for ind in range(len(self._generation)):
             for gene in range(len(self._generation[ind].assignment)):
                 # get job id from index
@@ -121,8 +120,12 @@ class GeAl:
                 engineer = self._db.get_random_eng(jid)
                 # set engineer for job
                 self._generation[ind].assignment[gene] = engineer
-
-        print [[x.assignment[i] for x in self._generation] for i in range(20)]
+                # get engineer index, increment worktime to job's duration + travel time penalty
+                eng_idx = self._engid_key.index(engineer)
+                duration = self._duration_dictionary[jid] + TRAVELTIME
+                self._generation[ind].worktime[eng_idx] += duration
+            print("ind: %s, assignment: %s" % (ind, self._generation[ind].assignment))
+            print("         worktime  : %s" % self._generation[ind].worktime)
 
     def roulette(self, fitness_scores):
         # TODO: 'roulette' method
@@ -138,7 +141,7 @@ class GeAl:
         if cumalativeFitness > r: # in the event of cumalative fitness becoming greater than r, return index of that chromo
             return i
 '''
-    def crossover(self):
+    def crossover(self, father, mother):
         # TODO: 'crossover' method
         pass
 
@@ -150,21 +153,23 @@ class Chromosome:
     Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
                         array worktime, len = No of engineers, value = engineers total worktime
     """
-    _total_duration = 0
-    _total_jobs = 0
+    # _total_duration = 0
+    # _total_jobs = 0
+    assignment = []
+    worktime = []
 
     def __init__(self, workforce, jobs):
         # Main chromosome array. Contains selected engineer for each job
         # Each position in array represents a job, indexed in Job index to id array (key index)
         self.assignment = [0 for x in range(jobs)]
         # Array to hold engineer's worktime; updated after each assignment
-        self.worktime = [WORKTIME for x in range(workforce)]
-        self.dummy_engineer = [self._total_jobs, self._total_duration]
+        self.worktime = [0 for x in range(workforce)]
+        # self.dummy_engineer = [self._total_jobs, self._total_duration]
 
-    def evaluate(self):
+    def evaluate(self, chromosome):
         # TODO: 'evaluate' method
         pass
 
-    def mutate(self):
+    def mutate(self, chromosome):
         # TODO: 'mutate' method
         pass
