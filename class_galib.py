@@ -198,7 +198,7 @@ class Chromosome:
     Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
                         array worktime, len = No of engineers, value = engineers total worktime
     """
-    # _total_duration = 0
+    # _total_duration = 0 
     # _total_jobs = 0
     assignment = []
     worktime = []
