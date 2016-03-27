@@ -1,5 +1,7 @@
 # import random
+from __future__ import print_function
 from class_db import *
+from math import *
 
 WORKTIME = 420
 TRAVELTIME = 15
@@ -52,7 +54,7 @@ TRAVELTIME = 15
         ""
 """
 
-
+########################################################################################################################
 class GeAl:
     """
     Main Genetic Algorithm Methods.
@@ -63,6 +65,7 @@ class GeAl:
     _pop_size = 0               # Population size
     _max_generations = 0        # Maximum generations to run GA
     _optimal_fitness = 0        # Optimal fitness to stop GA
+    _pop_fitness = []           # Population fitness array (len = pop_size)
     _generation = None          # Current generation
     _jobid_key = []             # Job index to id array (key index)
     _engid_key = []             # Engineer index to id array (key index)
@@ -87,6 +90,7 @@ class GeAl:
         :return: False if no records found, True otherwise
         """
 
+        self._pop_fitness = [0 for x in range(self._pop_size)]  # Init fitness array
         self._db = DataBase()
         self._total_jobs_nr = self._db.query("Select * from job")
         self._jobs_data = self._db.fetch()
@@ -127,6 +131,47 @@ class GeAl:
             print("ind: %s, assignment: %s" % (ind, self._generation[ind].assignment))
             print("         worktime  : %s" % self._generation[ind].worktime)
 
+
+    def selection(self, pop_rejection):
+        """
+
+        :param pop_rejection: population rejection percent
+        :return:
+        """
+        pass
+
+    def evaluate(self, working_time=80, overtime_weight=1):
+        """
+        Evaluate population fitness.
+
+        cost = SUM(overtime) x overtime_weight + dispersion
+        dispersion = SUM|x-X|/n
+        :return: max fitness
+        """
+        # overtime = []
+        mean_worktime = 0
+
+        # _pop_fitness
+
+        for ind in range(len(self._generation)):
+            mean_worktime = sum(self._generation[ind].worktime)/self._total_engineer_nr
+            dispersion = 0
+            overtime = 0
+            print ("ind: %s, mean wt: %s, swift:%s" % (ind, mean_worktime, working_time), end='\t')
+            for eng in self._generation[ind].worktime:
+                # Calculate dispersion for each engineer
+                dispersion += abs(eng-mean_worktime)
+                # print (abs(eng-mean_worktime),  end='-')
+                print (eng,  end='-')
+                # calculate overtime
+                overtime += 0 if eng < working_time else eng - working_time
+                # print (overtime, end=', ')
+            dispersion /= self._total_engineer_nr
+            fitness = overtime_weight * overtime + dispersion
+            print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (self._total_engineer_nr, dispersion, overtime,\
+                                                                   fitness))
+            # overtime[ind] =
+
     def roulette(self, fitness_scores):
         # TODO: 'roulette' method
         pass
@@ -145,7 +190,7 @@ class GeAl:
         # TODO: 'crossover' method
         pass
 
-
+########################################################################################################################
 class Chromosome:
     """
     chromosome structure definition.
@@ -173,3 +218,4 @@ class Chromosome:
     def mutate(self, chromosome):
         # TODO: 'mutate' method
         pass
+########################################################################################################################

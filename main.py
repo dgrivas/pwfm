@@ -12,9 +12,9 @@ def main():
 
     ga.prepare_pop()   # get total jobs, engineers from db
     ga.generate_pop()  # generate new population of random chromosomes
-    # print ga._generation
-
     print("Initial population ok!")
+    ga.evaluate()
+
 
     # iterations = 0
 '''
