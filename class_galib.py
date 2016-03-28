@@ -154,6 +154,8 @@ class GeAl:
         # _pop_fitness
 
         for ind in range(len(self._generation)):
+            self._generation[ind].evaluate(working_time, overtime_weight)
+            '''
             mean_worktime = sum(self._generation[ind].worktime)/self._total_engineer_nr
             dispersion = 0
             overtime = 0
@@ -170,7 +172,7 @@ class GeAl:
             fitness = overtime_weight * overtime + dispersion
             print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (self._total_engineer_nr, dispersion, overtime,\
                                                                    fitness))
-            # overtime[ind] =
+            '''
 
     def roulette(self, fitness_scores):
         # TODO: 'roulette' method
@@ -196,12 +198,14 @@ class Chromosome:
     chromosome structure definition.
 
     Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
-                        array worktime, len = No of engineers, value = engineers total worktime
+                        array worktime,    len = No of engineers, value = engineers total worktime
+                        # array fitness,     len = No of engineers, value = fitness of chromosome
+                        # array selection_p  len = No of engineers, value = selection probability
     """
-    # _total_duration = 0 
-    # _total_jobs = 0
     assignment = []
     worktime = []
+    # fitness = 0
+    selection_p = []
 
     def __init__(self, workforce, jobs):
         # Main chromosome array. Contains selected engineer for each job
@@ -209,11 +213,33 @@ class Chromosome:
         self.assignment = [0 for x in range(jobs)]
         # Array to hold engineer's worktime; updated after each assignment
         self.worktime = [0 for x in range(workforce)]
-        # self.dummy_engineer = [self._total_jobs, self._total_duration]
+        # self.fitness = [0 for x in range(workforce)]
+        # self.selection_p = [0 for x in range(workforce)]
 
-    def evaluate(self, chromosome):
-        # TODO: 'evaluate' method
-        pass
+    def evaluate(self, working_time, overtime_weight):
+        """
+        Evaluate Chromosome fitness.
+
+        cost = SUM(overtime) x overtime_weight + dispersion
+        dispersion = SUM|x-X|/n
+        :return: max fitness
+        """
+        eng_nr = len(self.worktime)
+        mean_worktime = sum(self.worktime)/eng_nr
+        dispersion = 0
+        overtime = 0
+        for eng in self.worktime:
+            # Calculate dispersion for each engineer
+            dispersion += abs(eng-mean_worktime)
+            # print (abs(eng-mean_worktime),  end='-')
+            print (eng,  end='-')
+            # calculate overtime
+            overtime += 0 if eng < working_time else eng - working_time
+            # print (overtime, end=', ')
+        dispersion /= eng_nr
+        fitness = overtime_weight * overtime + dispersion
+        print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (eng_nr, dispersion, overtime, fitness))
+        return fitness
 
     def mutate(self, chromosome):
         # TODO: 'mutate' method
