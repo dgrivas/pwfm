@@ -13,7 +13,9 @@ def main():
     ga.prepare_pop()   # get total jobs, engineers from db
     ga.generate_pop()  # generate new population of random chromosomes
     print("Initial population ok!")
-    ga.evaluate()
+    max_fit = ga.evaluate()
+    print("max fitness for population: %s\n" % max_fit)
+    ga.selection()
 
 
     # iterations = 0

@@ -2,6 +2,7 @@
 from __future__ import print_function
 from class_db import *
 from math import *
+from decimal import *
 
 WORKTIME = 420
 TRAVELTIME = 15
@@ -66,6 +67,7 @@ class GeAl:
     _max_generations = 0        # Maximum generations to run GA
     _optimal_fitness = 0        # Optimal fitness to stop GA
     _pop_fitness = []           # Population fitness array (len = pop_size)
+    _selection_pi = []          # Population selection probability
     _generation = None          # Current generation
     _jobid_key = []             # Job index to id array (key index)
     _engid_key = []             # Engineer index to id array (key index)
@@ -91,6 +93,7 @@ class GeAl:
         """
 
         self._pop_fitness = [0 for x in range(self._pop_size)]  # Init fitness array
+        self._selection_pi = [0 for x in range(self._pop_size)]  # Init selection probability array
         self._db = DataBase()
         self._total_jobs_nr = self._db.query("Select * from job")
         self._jobs_data = self._db.fetch()
@@ -131,14 +134,22 @@ class GeAl:
             print("ind: %s, assignment: %s" % (ind, self._generation[ind].assignment))
             print("         worktime  : %s" % self._generation[ind].worktime)
 
-
-    def selection(self, pop_rejection):
+    def selection(self, pop_rejection=0):
         """
 
         :param pop_rejection: population rejection percent
         :return:
         """
-        pass
+        # prepare selection probability for population
+        fitness_sum = sum(self._pop_fitness)
+        x2 = 0
+        for ind in range(len(self._generation)):
+            x1 = float(self._pop_fitness[ind]) / float(fitness_sum)
+            x2 += x1
+            print("x1: %s, x2: %s" % (x1, float(x2)))
+            self._selection_pi[ind] = x1
+        print(self._selection_pi)
+
 
     def evaluate(self, working_time=80, overtime_weight=1):
         """
@@ -146,35 +157,17 @@ class GeAl:
 
         cost = SUM(overtime) x overtime_weight + dispersion
         dispersion = SUM|x-X|/n
-        :return: max fitness
+        :param working_time: normal working time
+        :param overtime_weight: weight to multiply overtime in fitness function
+        :return: max fitness (min cost)
         """
-        # overtime = []
-        mean_worktime = 0
-
-        # _pop_fitness
 
         for ind in range(len(self._generation)):
-            self._generation[ind].evaluate(working_time, overtime_weight)
-            '''
-            mean_worktime = sum(self._generation[ind].worktime)/self._total_engineer_nr
-            dispersion = 0
-            overtime = 0
-            print ("ind: %s, mean wt: %s, swift:%s" % (ind, mean_worktime, working_time), end='\t')
-            for eng in self._generation[ind].worktime:
-                # Calculate dispersion for each engineer
-                dispersion += abs(eng-mean_worktime)
-                # print (abs(eng-mean_worktime),  end='-')
-                print (eng,  end='-')
-                # calculate overtime
-                overtime += 0 if eng < working_time else eng - working_time
-                # print (overtime, end=', ')
-            dispersion /= self._total_engineer_nr
-            fitness = overtime_weight * overtime + dispersion
-            print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (self._total_engineer_nr, dispersion, overtime,\
-                                                                   fitness))
-            '''
+            self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
+        return min(self._pop_fitness)
 
-    def roulette(self, fitness_scores):
+
+    def _roulette(self, fitness_scores):
         # TODO: 'roulette' method
         pass
         '''
