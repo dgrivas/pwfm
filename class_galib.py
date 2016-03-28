@@ -138,7 +138,7 @@ class GeAl:
         """
 
         :param pop_rejection: population rejection percent
-        :return:
+        :return: Individuals selected for crossover
         """
         # prepare selection probability for population
         fitness_sum = sum(self._pop_fitness)

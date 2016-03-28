@@ -16,6 +16,9 @@ def main():
     max_fit = ga.evaluate()
     print("max fitness for population: %s\n" % max_fit)
     ga.selection()
+    # TODO: Calculate population rejection ratio to get nr of offsprings
+    # TODO: loop 'offspring' times to get parents from ga.selection
+    # TODO:   and call crossover
 
 
     # iterations = 0
