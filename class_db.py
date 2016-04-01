@@ -33,8 +33,10 @@ class DataBase:
         :param job_id: job id to search for engineers
         :return: random choice of engineer
         """
-        sql = "SELECT job_eng_eid FROM job_engineers WHERE job_eng_jid=%s"
-        self._db_cur.execute(sql, job_id)  # Returns long integer rows affected, if any
+        # sql = "SELECT job_eng_eid FROM job_engineers WHERE job_eng_jid=%s"
+        sql = "SELECT job_eng_eid FROM job_engineers WHERE job_eng_jid=" + str(job_id)
+        # self._db_cur.execute(sql, job_id)  # Returns long integer rows affected, if any
+        self._db_cur.execute(sql)  # Returns long integer rows affected, if any
         data = self._db_cur.fetchall()
         data = [x[0] for x in data]
         return random.choice(data)

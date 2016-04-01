@@ -32,7 +32,7 @@ class Ga:
         # [[row[i] for row in matrix] for i in range(4)]
         # for x, y in zip(a, b):
 
-def main():
+def main2():
     ga = Ga()
     ga.start()
     db = DataBase()
@@ -53,7 +53,6 @@ def main1():
     rnd = random.choice(data)
     print data
     print("Random eng: %s" % rnd)
-
 
 if __name__ == "__main__":
     main()

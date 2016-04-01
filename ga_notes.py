@@ -87,3 +87,50 @@ def test():
     print("Total rows: %s\nData:\t%s" % (rows, data[1]))
 
 #########################################################################################
+"""
+    def randint(self, a, b):
+        ""Return random integer in range [a, b], including both end points.
+        ""
+
+    def choice(self, seq):
+        ""Choose a random element from a non-empty sequence.""
+
+    def shuffle(self, x, random=None):
+        ""x, random=random.random -> shuffle list x in place; return None.
+        Optional arg random is a 0-argument function returning a random
+        float in [0.0, 1.0); by default, the standard random.random.
+        ""
+
+    def sample(self, population, k):
+        ""Chooses k unique random elements from a population sequence.
+
+        Returns a new list containing elements from the population while
+        leaving the original population unchanged.  The resulting list is
+        in selection order so that all sub-slices will also be valid random
+        samples.  This allows raffle winners (the sample) to be partitioned
+        into grand prize and second place winners (the subslices).
+
+        Members of the population need not be hashable or unique.  If the
+        population contains repeats, then each occurrence is a possible
+        selection in the sample.
+
+        To choose a sample in a range of integers, use xrange as an argument.
+        This is especially fast and space efficient for sampling from a
+        large population:   sample(xrange(10000000), 60)
+        ""
+
+    def normalvariate(self, mu, sigma):
+        ""Normal distribution.
+
+        mu is the mean, and sigma is the standard deviation.
+        ""
+
+    def gauss(self, mu, sigma):
+        ""Gaussian distribution.
+
+        mu is the mean, and sigma is the standard deviation.  This is
+        slightly faster than the normalvariate() function.
+
+        Not thread-safe without a lock around calls.
+        ""
+"""
