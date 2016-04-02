@@ -5,8 +5,8 @@ from class_db import *
 from math import *
 
 
-CROSSOVER_ENGINEERS = 4
-CROSSOVER_JOBS = 2
+CROSSOVER_ENGINEERS = 0.4
+CROSSOVER_JOBS = 0.2
 
 ########################################################################################################################
 class GeAl:
@@ -31,6 +31,8 @@ class GeAl:
     _jobs_data = []             # Jobs from db
     _engineers_data = []        # Engineers from db
     _travel_time = 0            # Travel time to add on each job duration
+    _crossover_engs = 0         # (CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2
+    _crossover_jobs = 0         # (CROSSOVER_JOBS * self._total_jobs_nr)
 
     def __init__(self, optimal, lifetime, popsize):
         self._max_generations = lifetime
@@ -46,7 +48,6 @@ class GeAl:
         Create key arrays for Job's & Engineer's id
         :return: False if no records found, True otherwise
         """
-
         self._pop_fitness = [0 for x in range(self._pop_size)]  # Init fitness array
         self._selection_pi = [0 for x in range(self._pop_size)]  # Init selection probability array
         self._db = DataBase()
@@ -59,6 +60,10 @@ class GeAl:
         self._total_engineer_nr = self._db.query("Select * from engineer")
         self._engineers_data = self._db.fetch()
         self._engid_key = [eid[0] for eid in self._engineers_data]  # get engineer id for key array
+        #
+        self._crossover_engs = int(round((CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2))
+        self._crossover_jobs = int(round(CROSSOVER_JOBS * self._total_jobs_nr))
+        #
         if (self._total_jobs_nr and self._total_engineer_nr) == 0:
             return False
         else:
@@ -179,8 +184,12 @@ class GeAl:
         offspring_assignment = [x for x in self._generation[father].assignment]
         offspring_worktime = [0 for x in range(self._total_engineer_nr)]
 
-        # Get CROSSOVER_ENGINEERS with highest worktime from father:
-        engineers = self._index_sort(offspring_worktime, top=CROSSOVER_ENGINEERS)
+        # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
+        engineers = self._index_sort(offspring_worktime,
+                                     top=self._crossover_engs)
+        # Get CROSSOVER_ENGINEERS/2 with lowest worktime from father:
+        engineers = self._index_sort(offspring_worktime,
+                                     top=self._crossover_engs, rev=False)
         # print("\tengs: %s" % engineers)
         engineers = [self._engid_key[x] for x in engineers]  # get engineer id from index
         # print("\tengs(id): %s" % engineers)
@@ -191,7 +200,7 @@ class GeAl:
             jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(offspring_assignment))]
             # print("jobs1:%s" % jobs)
             # get random CROSSOVER_JOBS jobs
-            k = min(CROSSOVER_JOBS, len(jobs))
+            k = min(self._crossover_jobs, len(jobs))
             jobs = random.sample(jobs,k)
             # print("jobs:%s" % jobs)
             # Replace job assignments according to mother's assignments:
@@ -216,7 +225,6 @@ class GeAl:
         """
         Integrate generated offsprings into generation.
 
-        :return:
         """
         for (x,y,z) in self._nebula:
             self._generation[x].assignment = y
@@ -224,44 +232,45 @@ class GeAl:
         # Clear nebula for next generation
         self._nebula = []
 
-    def apply_mutation(self, mutation_p):
+    def apply_mutation(self, mutation_p, newborn=True):
         """
         Apply mutation on generation.
 
         Θα επιλέγονται τυχαίες εργασίες, με πιθανότητα mutation_p, για τις οποίες θα αλλάζει η ανάθεση
         σε κάποιον άλλο από τους διαθέσιμους για την κάθε εργασία, με τυχαίο τρόπο.
+        :param newborn: if True, apply mutation on newborn offsprings else mutate whole generation
         :param mutation_p: mutation probability
-        :return:
         """
-        for ind in self._generation:
-            for gene in range(self._total_jobs_nr):
-                r = random.random()
-                if r < mutation_p:
-                    # print("\n(%s) Mutate gene:%s in \n        ind:%s" % (r, gene, ind.assignment))
-                    # ind.mutate(gene)
-                    # # get job id from index
-                    # jid = self._jobid_key[gene]
-
-                    # select random engineer from job's CanDo list
-                    ind.assignment[gene] = self._db.get_random_eng(self._jobid_key[gene])
-                    # # set engineer for job
-                    # ind.assignment[gene] = engineer
-                    # print("Mutated ind:%s" % ind.assignment)
+        if newborn:
+            for (ind,asg,wt) in self._nebula:
+                for gene in range(self._total_jobs_nr):
+                    r = random.random()
+                    if r < mutation_p:
+                        asg[gene] = self._db.get_random_eng(self._jobid_key[gene])
+        else:
+            for ind in self._generation:
+            # for ind in pop:
+                for gene in range(self._total_jobs_nr):
+                    r = random.random()
+                    if r < mutation_p:
+                        # # get job id from index
+                        # jid = self._jobid_key[gene]
+                        # select random engineer from job's CanDo list
+                        ind.assignment[gene] = self._db.get_random_eng(self._jobid_key[gene])
+                        # # set engineer for job
+                        # ind.assignment[gene] = engineer
+                        # print("Mutated ind:%s" % ind.assignment)
         self._update_generation_worktime()
-
-
 
 # ---------------------------------------------------------------
     def _update_generation_worktime(self):
         for ind in self._generation:
-            ind.worktime = [0 for x in range(self._total_engineer_nr)]
+            ind.worktime = [0 for x in range(self._total_engineer_nr)]  # reset current worktime
             for job, eng in enumerate(ind.assignment):
                 duration = self._duration_dictionary[self._jobid_key[job]] + self._travel_time
                 ind.worktime[self._engid_key.index(eng)] += duration
             # print(self._duration_dictionary)
             # print("new worktime: %s\n\tjobs:%s" % (ind.worktime, ind.assignment))
-
-
 
     def set_travel_time(self, traveltime):
         self._travel_time = traveltime
@@ -281,6 +290,9 @@ class GeAl:
     def print_pop_fitness(self):
         print("\nGeneration fitness:")
         print("\t%s" % self._pop_fitness)
+
+    # def get_pop_fitness(self):
+    #     return self._pop_fitness
 
     def _index_sort(self, unsorted, top, key=1, rev=True):
         """
