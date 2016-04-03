@@ -1,9 +1,21 @@
+#!/usr/bin/env python
 from __future__ import print_function
 from class_galib import *
 import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rcParams['font.size'] = 10.0
+import timeit
 
+
+OPTIMAL_FITNESS = 35
+LIFETIME = 300  # Max GA iterations
+POPSIZE = 20  # Population size
+REJECTION = 0.2  # Population rejection ratio
+MUTATION_PROBABILITY = 0.02  # Mutation probability
+TRAVELTIME = 15
+WORKING_TIME = 220
+OVERTIME_WEIGHT = 1.8
+"""
 OPTIMAL_FITNESS = 75
 LIFETIME = 300  # Max GA iterations
 POPSIZE = 20  # Population size
@@ -12,13 +24,15 @@ MUTATION_PROBABILITY = 0.15  # Mutation probability
 TRAVELTIME = 15
 WORKING_TIME = 80
 OVERTIME_WEIGHT = 1.5
-
+"""
 pop_fit = []
 optimum_fit = []
 mean_fit = []
 
 
 def main():
+    start = timeit.default_timer()
+
     # Create main GA object
     ga = GeAl(OPTIMAL_FITNESS, LIFETIME, POPSIZE, TRAVELTIME)
     # ga.set_travel_time(TRAVELTIME)
@@ -68,8 +82,10 @@ def main():
         update_plot_data(ga, fitness)
         pass
     # Print optimum solution
-    print("\n\nOptimum fitness, after %s life cycles: %s" % (fitness, g+1))
-    print("\nOptimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
+    stop = timeit.default_timer()
+    print("\n\nRuntime: %s" % (stop - start))
+    print("Optimum fitness, after %s life cycles: %s" % (g+1, fitness))
+    print("Optimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
     #
     plot_result(pop_fit, mean_fit, optimum_fit)
 

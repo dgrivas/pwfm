@@ -4,7 +4,7 @@ from class_db import *
 
 
 CROSSOVER_ENGINEERS = 0.4
-CROSSOVER_JOBS = 0.2
+CROSSOVER_JOBS = 0.3
 
 ########################################################################################################################
 
@@ -186,8 +186,51 @@ class GeAl:
         """
         # Father will become offspring after crossover:
         offspring_assignment = [x for x in self._generation[father].assignment]
-        offspring_worktime = [x for x in self._generation[father].worktime] # range(self._total_engineer_nr)]
+        offspring_worktime = [x for x in self._generation[father].worktime]  # range(self._total_engineer_nr)]
         #
+        # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
+        engineers_h = self._index_sort(offspring_worktime,
+                                     top=self._crossover_engs)
+        # Get CROSSOVER_ENGINEERS/2 with lowest worktime from father:
+        engineers_l = (self._index_sort(offspring_worktime,
+                                     top=self._crossover_engs, rev=False))
+        # print("\tengs: %s" % engineers)
+        engineers_h = [self._engid_key[x] for x in engineers_h]  # get engineer id from index
+        engineers_l = [self._engid_key[x] for x in engineers_l]  # get engineer id from index
+        # print("\tengs(id): %s" % engineers)
+        #
+        # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
+        for eng in engineers_h:
+            # Get jobs index for engineer (eng)
+            jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(offspring_assignment))]
+            # TODO: jobs for 0 worktime????
+            # print("jobs1:%s for engineer:%s" % (jobs, eng))
+            # Get random CROSSOVER_JOBS jobs
+            k = min(self._crossover_jobs, len(jobs))
+            jobs = random.sample(jobs,k)
+            # print("jobs:%s" % jobs)
+            # Replace job assignments according to mother's assignments:
+            for job in jobs:
+                offspring_assignment[job] = self._generation[mother].assignment[job]
+                pass
+            pass
+        # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
+        for eng in engineers_l:
+            # Get jobs index for engineer (eng)
+            jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(self._generation[mother].assignment))]
+            # TODO: jobs for 0 worktime????
+            # print("jobs1:%s for engineer:%s" % (jobs, eng))
+            # Get random CROSSOVER_JOBS jobs
+            k = min(self._crossover_jobs, len(jobs))
+            jobs = random.sample(jobs,k)
+            # print("jobs:%s" % jobs)
+            # Replace job assignments according to mother's assignments:
+            for job in jobs:
+                offspring_assignment[job] = self._generation[mother].assignment[job]
+                pass
+            pass
+
+        '''
         # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
         engineers = self._index_sort(offspring_worktime,
                                      top=self._crossover_engs)
@@ -213,6 +256,9 @@ class GeAl:
                 offspring_assignment[job] = self._generation[mother].assignment[job]
                 pass
             pass
+
+
+        '''
         #
         # Update worktime
         if update_wt:
