@@ -1,6 +1,7 @@
 import MySQLdb
 import random
 
+
 class DataBase:
     """
     Create database connection.
@@ -53,7 +54,6 @@ class DataBase:
         data = self._db_cur.fetchone()
         return data[0]
     '''
-
 
     def __del__(self):
         self._db_connection.close()
