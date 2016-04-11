@@ -7,14 +7,27 @@ matplotlib.rcParams['font.size'] = 10.0
 import timeit
 
 
-OPTIMAL_FITNESS = 35
+OPTIMAL_FITNESS = 20
 LIFETIME = 300  # Max GA iterations
-POPSIZE = 20  # Population size
-REJECTION = 0.2  # Population rejection ratio
+POPSIZE = 40  # Population size
+REJECTION = 0.3  # Population rejection ratio
 MUTATION_PROBABILITY = 0.02  # Mutation probability
 TRAVELTIME = 15
 WORKING_TIME = 220
+OVERTIME_WEIGHT = 1.0
+"""
+OPTIMAL_FITNESS = 35
+LIFETIME = 300  # Max GA iterations
+POPSIZE = 40  # Population size
+REJECTION = 0.3  # Population rejection ratio
+MUTATION_PROBABILITY = 0.01  # Mutation probability
+TRAVELTIME = 15
+WORKING_TIME = 220
 OVERTIME_WEIGHT = 1.8
+
+"""
+
+
 """
 OPTIMAL_FITNESS = 75
 LIFETIME = 300  # Max GA iterations
@@ -43,7 +56,7 @@ def main():
     ga.generate_pop()
     #
     # Evaluate population:
-    (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
+    (fitness, assignment, worktime, overtime, dispersion) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
     update_plot_data(ga, fitness)
     #
     # Evolution loop:
@@ -78,16 +91,18 @@ def main():
         ga.clear_nebula()
         #
         # Evaluate population:
-        (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
+        (fitness, assignment, worktime, overtime, dispersion) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
+        # (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
         update_plot_data(ga, fitness)
         pass
     # Print optimum solution
     stop = timeit.default_timer()
     print("\n\nRuntime: %s" % (stop - start))
-    print("Optimum fitness, after %s life cycles: %s" % (g+1, fitness))
+    print("Optimum fitness: %s, after %s life cycles" % (fitness, g+1))
+    print("Mean worktime: %s" % (sum(worktime)/len(worktime)))
     print("Optimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
     #
-    plot_result(pop_fit, mean_fit, optimum_fit)
+    plot_result(pop_fit, mean_fit, optimum_fit, overtime, dispersion)
 
 
 def update_plot_data(ga, fitness):
@@ -103,7 +118,7 @@ def update_plot_data(ga, fitness):
     mean_fit.append(sum(ga._pop_fitness)/len(ga._pop_fitness))  # Calculate mean fitness
 
 
-def plot_result(population, mean, best):
+def plot_result(population, mean, best, overtime, dispersion):
     """
     Plot GA data.
 
@@ -132,7 +147,8 @@ def plot_result(population, mean, best):
     pf.set_title('Population Fitness Evolution', fontweight='bold', fontsize=12)
     #
     # Create best fitness plot
-    textstr = 'Best fitness: %s' % min(best)
+    textstr = 'Best fitness: %s\nOvertime: %s\nDispersion: %s' % (min(best), overtime, dispersion)
+
     bf = fig.add_subplot(212)
     bf.set_xlim(0, len(population))
     bf.set_ylabel('Fitness')

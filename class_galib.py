@@ -28,8 +28,9 @@ class GeAl:
     _total_jobs_nr = 0          # Number of total jobs
     _total_engineer_nr = 0      # Number of total engineers
     _duration_dictionary = {}   # Dictionary with {job_id : job_duration}
-    _jobs_data = []             # Jobs from db
-    _engineers_data = []        # Engineers from db
+    # _jobs_data = []             # Jobs from db
+    # _engineers_data = []        # Engineers from db
+    _skills = []                # Engineers skill
     _travel_time = 0            # Travel time to add on each job duration
     _crossover_engs = 0         # (CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2
     _crossover_jobs = 0         # (CROSSOVER_JOBS * self._total_jobs_nr)
@@ -53,14 +54,15 @@ class GeAl:
         self._selection_pi = [0 for x in range(self._pop_size)]  # Init selection probability array
         self._db = DataBase()
         self._total_jobs_nr = self._db.query("Select * from job")
-        self._jobs_data = self._db.fetch()
+        jobs_data = self._db.fetch()
         # print self._jobs_data
-        self._jobid_key = [jid[0] for jid in self._jobs_data]  # get job id for key array
-        for job in self._jobs_data:
+        self._jobid_key = [jid[0] for jid in jobs_data]  # get job id for key array
+        for job in jobs_data:
             self._duration_dictionary[job[0]] = job[2]  # get job_id:duration in dictionary
         self._total_engineer_nr = self._db.query("Select * from engineer")
-        self._engineers_data = self._db.fetch()
-        self._engid_key = [eid[0] for eid in self._engineers_data]  # get engineer id for key array
+        engineers_data = self._db.fetch()
+        self._engid_key = [eid[0] for eid in engineers_data]  # get engineer id for key array
+        self._skills = [eid[1] for eid in engineers_data]  # get engineers skills
         #
         self._crossover_engs = int(round((CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2))
         self._crossover_jobs = int(round(CROSSOVER_JOBS * self._total_jobs_nr))
@@ -107,17 +109,20 @@ class GeAl:
         :param overtime_weight: weight to multiply overtime in fitness function
         :return: max fitness (min cost)
         """
-        # TODO: Return best individual
         # print("\nEvaluate population:")
+        overtime = dispersion = 0
         for ind in range(len(self._generation)):
-            self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
+            # self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
+            overtime, dispersion = self._generation[ind].evaluate(working_time, overtime_weight)
+            self._pop_fitness[ind] = overtime_weight * overtime + dispersion
+            # print("overtime: %s, Dispersion: %s" % (overtime, dispersion))
             pass
         best_fit = min(self._pop_fitness)
         best_ind_idx = self._pop_fitness.index(best_fit)
         best_assignment = self._generation[best_ind_idx].assignment
         best_worktime =  self._generation[best_ind_idx].worktime
-        # TODO: Save optimum fitness
-        return [best_fit, best_assignment, best_worktime]
+        # return [best_fit, best_assignment, best_worktime]
+        return [best_fit, best_assignment, best_worktime, overtime, dispersion]
 
     def prepare_selection(self):
         """
@@ -203,7 +208,6 @@ class GeAl:
         for eng in engineers_h:
             # Get jobs index for engineer (eng)
             jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(offspring_assignment))]
-            # TODO: jobs for 0 worktime????
             # print("jobs1:%s for engineer:%s" % (jobs, eng))
             # Get random CROSSOVER_JOBS jobs
             k = min(self._crossover_jobs, len(jobs))
@@ -218,7 +222,6 @@ class GeAl:
         for eng in engineers_l:
             # Get jobs index for engineer (eng)
             jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(self._generation[mother].assignment))]
-            # TODO: jobs for 0 worktime????
             # print("jobs1:%s for engineer:%s" % (jobs, eng))
             # Get random CROSSOVER_JOBS jobs
             k = min(self._crossover_jobs, len(jobs))
@@ -332,8 +335,14 @@ class GeAl:
             # print("old jobs: %s\nworktime:\t\t%s" % (ind.assignment, ind.worktime))
             ind.worktime = [0 for x in range(self._total_engineer_nr)]  # reset current worktime
             for job, eng in enumerate(ind.assignment):
-                duration = self._duration_dictionary[self._jobid_key[job]] + self._travel_time
-                ind.worktime[self._engid_key.index(eng)] += duration
+                eng_idx = self._engid_key.index(eng)
+                skill = float(self._skills[eng_idx])
+                # duration = self._duration_dictionary[self._jobid_key[job]] + self._travel_time
+                # print("job: %s, Duration: %s" % (job, self._duration_dictionary[self._jobid_key[job]]), end="  -  ")
+                duration = self._duration_dictionary[self._jobid_key[job]] * skill
+                # print("Skill: %s, New Duration: %s, Round: %s" % (skill, duration, round(duration)))
+                duration += self._travel_time
+                ind.worktime[eng_idx] += int(round(duration))
                 pass
             pass
             # print("new worktime:\t%s" % ind.worktime)
@@ -413,6 +422,6 @@ class Chromosome:
         dispersion /= eng_nr
         fitness = overtime_weight * overtime + dispersion
         # print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (eng_nr, dispersion, overtime, fitness))
-        return fitness
-
+        # return fitness
+        return overtime, dispersion
 ########################################################################################################################
