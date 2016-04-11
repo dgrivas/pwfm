@@ -1,2 +1,6 @@
 # pwfm
-http://mysql-python.sourceforge.net/MySQLdb.html
+Python version: 2.7
+
+Required packages:
+MySQLdb,
+matplotlib
