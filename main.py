@@ -7,14 +7,14 @@ matplotlib.rcParams['font.size'] = 10.0
 import timeit
 
 
-OPTIMAL_FITNESS = 20
+OPTIMAL_FITNESS = 10
 LIFETIME = 300  # Max GA iterations
 POPSIZE = 40  # Population size
 REJECTION = 0.3  # Population rejection ratio
 MUTATION_PROBABILITY = 0.02  # Mutation probability
 TRAVELTIME = 15
 WORKING_TIME = 220
-OVERTIME_WEIGHT = 1.0
+OVERTIME_WEIGHT = 20.0
 """
 OPTIMAL_FITNESS = 35
 LIFETIME = 300  # Max GA iterations
@@ -77,7 +77,7 @@ def main():
         for offspring in offsprings:
             parents = ga.select()
             # print("kid: %s, parents: %s" % (offspring, parents))
-            ga.crossover(parents[0], parents[1], offspring, update_wt=False)
+            ga.crossover(parents[0], parents[1], offspring)
             pass
         # ga.print_nebula()
         #

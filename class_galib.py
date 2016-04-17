@@ -90,14 +90,10 @@ class GeAl:
                 engineer = self._db.get_random_eng(jid)
                 # set engineer for job
                 self._generation[ind].assignment[gene] = engineer
-                # get engineer index, increment worktime to job's duration + travel time penalty
-                eng_idx = self._engid_key.index(engineer)
-                duration = self._duration_dictionary[jid] + self._travel_time
-                self._generation[ind].worktime[eng_idx] += duration
                 pass
-            # print("ind: %s, assignment: %s" % (ind, self._generation[ind].assignment))
-            # print("         worktime  : %s" % self._generation[ind].worktime)
-        pass
+            pass
+        # Calculate worktime for generation
+        self._update_generation_worktime()
 
     def evaluate_population(self, working_time, overtime_weight):
         """
@@ -176,7 +172,7 @@ class GeAl:
         """
         return self._index_sort(self._pop_fitness, inds_nr)
 
-    def crossover(self, father, mother, offspring, update_wt):
+    def crossover(self, father, mother, offspring):
         """
         Crossover father & mother, generate offspring.
 
@@ -232,50 +228,6 @@ class GeAl:
                 offspring_assignment[job] = self._generation[mother].assignment[job]
                 pass
             pass
-
-        '''
-        # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
-        engineers = self._index_sort(offspring_worktime,
-                                     top=self._crossover_engs)
-        # Get CROSSOVER_ENGINEERS/2 with lowest worktime from father:
-        engineers.extend(self._index_sort(offspring_worktime,
-                                     top=self._crossover_engs, rev=False))
-        # print("\tengs: %s" % engineers)
-        engineers = [self._engid_key[x] for x in engineers]  # get engineer id from index
-        # print("\tengs(id): %s" % engineers)
-        #
-        # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
-        for eng in engineers:
-            # Get jobs index for engineer (eng)
-            jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(offspring_assignment))]
-            # TODO: jobs for 0 worktime????
-            # print("jobs1:%s for engineer:%s" % (jobs, eng))
-            # Get random CROSSOVER_JOBS jobs
-            k = min(self._crossover_jobs, len(jobs))
-            jobs = random.sample(jobs,k)
-            # print("jobs:%s" % jobs)
-            # Replace job assignments according to mother's assignments:
-            for job in jobs:
-                offspring_assignment[job] = self._generation[mother].assignment[job]
-                pass
-            pass
-
-
-        '''
-        #
-        # Update worktime
-        if update_wt:
-            # Clear previous worktime
-            offspring_worktime = [0 for x in range(self._total_engineer_nr)]
-            for job, eng in enumerate(offspring_assignment):
-                duration = self._duration_dictionary[self._jobid_key[job]] + self._travel_time
-                offspring_worktime[self._engid_key.index(eng)] += duration
-                pass
-        # print("new offspring_worktime: %s" % offspring_worktime)
-        # # print ("offspring: %s" % offspring_assignment)
-        # print("mother   : %s" % self._generation[mother].assignment)
-        # print("father   : %s" % self._generation[father].assignment)
-        # print("offspring: %s" % offspring_assignment)
         #
         # Append offspring in nebula:
         self._nebula.append((offspring, offspring_assignment, offspring_worktime))
@@ -388,11 +340,9 @@ class Chromosome:
     Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
                         array worktime,    len = No of engineers, value = engineers total worktime
                         # array fitness,     len = No of engineers, value = fitness of chromosome
-                        # array selection_p  len = No of engineers, value = selection probability
     """
     assignment = []
     worktime = []
-    selection_p = []
 
     def __init__(self, workforce, jobs):
         # Main chromosome array. Contains selected engineer for each job
