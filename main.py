@@ -1,3 +1,4 @@
+# coding=utf-8
 #!/usr/bin/env python
 from __future__ import print_function
 from class_galib import *
@@ -5,8 +6,10 @@ import matplotlib.pyplot as plt
 import matplotlib
 matplotlib.rcParams['font.size'] = 10.0
 import timeit
+import os
+import sys
 
-
+'''
 OPTIMAL_FITNESS = 10
 LIFETIME = 300  # Max GA iterations
 POPSIZE = 40  # Population size
@@ -15,6 +18,8 @@ MUTATION_PROBABILITY = 0.02  # Mutation probability
 TRAVELTIME = 15
 WORKING_TIME = 220
 OVERTIME_WEIGHT = 20.0
+'''
+
 """
 OPTIMAL_FITNESS = 35
 LIFETIME = 300  # Max GA iterations
@@ -27,27 +32,24 @@ OVERTIME_WEIGHT = 1.8
 
 """
 
-
-"""
-OPTIMAL_FITNESS = 75
-LIFETIME = 300  # Max GA iterations
-POPSIZE = 20  # Population size
-REJECTION = 0.2  # Population rejection ratio
-MUTATION_PROBABILITY = 0.15  # Mutation probability
-TRAVELTIME = 15
-WORKING_TIME = 80
-OVERTIME_WEIGHT = 1.5
-"""
 pop_fit = []
 optimum_fit = []
 mean_fit = []
 
 
 def main():
+    # Get parameters from menu:
+    optimal_fitness, lifetime, popsize, rejection, mutation_probability, \
+           traveltime, surplus_weight, overtime_weight = main_menu()
+
+    print("Initializing...", end='\r')
+    sys.stdout.flush()
+
+    # Initialize timer
     start = timeit.default_timer()
 
     # Create main GA object
-    ga = GeAl(OPTIMAL_FITNESS, LIFETIME, POPSIZE, TRAVELTIME)
+    ga = GeAl(optimal_fitness, lifetime, popsize, traveltime)
     # ga.set_travel_time(TRAVELTIME)
     #
     # Prepare data for population (get total jobs, engineers from db):
@@ -56,19 +58,21 @@ def main():
     ga.generate_pop()
     #
     # Evaluate population:
-    (fitness, assignment, worktime, overtime, dispersion) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
+    (fitness, assignment, worktime, overtime, surplus, dispersion) = \
+        ga.evaluate_population(overtime_weight, surplus_weight)
     update_plot_data(ga, fitness)
     #
     # Evolution loop:
-    for g in range(LIFETIME):
-        # TODO: check improvement
-        if fitness < OPTIMAL_FITNESS:
+    for g in range(lifetime):
+        print("Evolution: %s" % g, end='\r')
+        sys.stdout.flush()
+        if fitness < optimal_fitness:
             g -= 1
             break
         #
         # Selection:
         ga.prepare_selection()  # prepare cumulative probability list
-        offsprings_nr = int(round(REJECTION * POPSIZE))
+        offsprings_nr = int(round(rejection * popsize))
         offsprings = ga.individuals2replace(offsprings_nr)  # get individuals to replace
         # print("\nIndividuals to replace: %s" % offsprings)
         #
@@ -82,7 +86,7 @@ def main():
         # ga.print_nebula()
         #
         # Mutation:
-        ga.apply_mutation(MUTATION_PROBABILITY, newborn=True)
+        ga.apply_mutation(mutation_probability, newborn=True)
         #
         # Integrate offsprings into next generation, update worktime:
         ga.update_generation()
@@ -91,18 +95,20 @@ def main():
         ga.clear_nebula()
         #
         # Evaluate population:
-        (fitness, assignment, worktime, overtime, dispersion) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
+        (fitness, assignment, worktime, overtime, surplus, dispersion) = \
+            ga.evaluate_population(overtime_weight, surplus_weight)
         # (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
         update_plot_data(ga, fitness)
         pass
     # Print optimum solution
     stop = timeit.default_timer()
-    print("\n\nRuntime: %s" % (stop - start))
+    runtime = stop - start
+    print("\n\nRuntime: %s" % runtime)
     print("Optimum fitness: %s, after %s life cycles" % (fitness, g+1))
     print("Mean worktime: %s" % (sum(worktime)/len(worktime)))
     print("Optimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
     #
-    plot_result(pop_fit, mean_fit, optimum_fit, overtime, dispersion)
+    plot_result(pop_fit, mean_fit, optimum_fit, overtime, surplus, dispersion)
 
 
 def update_plot_data(ga, fitness):
@@ -118,7 +124,7 @@ def update_plot_data(ga, fitness):
     mean_fit.append(sum(ga._pop_fitness)/len(ga._pop_fitness))  # Calculate mean fitness
 
 
-def plot_result(population, mean, best, overtime, dispersion):
+def plot_result(population, mean, best, overtime, surplus, dispersion):
     """
     Plot GA data.
 
@@ -147,7 +153,7 @@ def plot_result(population, mean, best, overtime, dispersion):
     pf.set_title('Population Fitness Evolution', fontweight='bold', fontsize=12)
     #
     # Create best fitness plot
-    textstr = 'Best fitness: %s\nOvertime: %s\nDispersion: %s' % (min(best), overtime, dispersion)
+    textstr = 'Best fitness: %s\nOvertime: %s\nSurplus: %s\nDispersion: %s' % (min(best), overtime, surplus, dispersion)
 
     bf = fig.add_subplot(212)
     bf.set_xlim(0, len(population))
@@ -162,6 +168,58 @@ def plot_result(population, mean, best, overtime, dispersion):
     #
     plt.tight_layout()
     plt.show()
+
+def main_menu():
+    optimal_fitness = 10
+    lifetime = 300  # Max GA iterations
+    popsize = 40  # Population size
+    rejection = 0.3  # Population rejection ratio
+    mutation_probability = 0.02  # Mutation probability
+    traveltime = 15
+    surplus_weight = 10.0
+    overtime_weight = 2.0
+    while True:
+        os.system('clear')
+        print (70 * '-')
+        print ("     Π Α Ρ Α Μ Ε Τ Ρ Ο Ι   Γ Ε Ν Ε Τ Ι Κ Ο Υ   Α Λ Γ Ο Ρ Ι Θ Μ Ο Υ")
+        print (70 * '-')
+        print("\n\t[1]  Optimal Fitness (%s)"
+              "\n\t[2]  Lifetime (%s)"
+              "\n\t[3]  Population Size (%s)"
+              "\n\t[4]  Rejection (%s)"
+              "\n\t[5]  Mutation Probability (%s)"
+              "\n\t[6]  Travel Time (%s)"
+              "\n\t[7]  Surplus Weight (%s)"
+              "\n\t[8]  Overtime Weight (%s)"
+              "\n\n\t[0]  Εκτέλεση αλγορίθμου" % (optimal_fitness, lifetime, popsize, rejection, mutation_probability,
+                                                  traveltime, surplus_weight, overtime_weight))
+        try:
+            selection = raw_input("\nΕπιλέξτε παράμετρο: ")
+            if selection =='1':
+                optimal_fitness = int(raw_input("Optimal Fitness: "))
+            elif selection == '2':
+              lifetime = int(raw_input("Lifetime: "))
+            elif selection == '3':
+              popsize = int(raw_input("Population Size: "))
+            elif selection == '4':
+              rejection = float(raw_input("Rejection: "))
+            elif selection == '5':
+              mutation_probability = float(raw_input("Mutation Probability: "))
+            elif selection == '6':
+              traveltime = int(raw_input("Travel Time: "))
+            elif selection == '7':
+              surplus_weight = float(raw_input("Surplus Weight: "))
+            elif selection == '8':
+              overtime_weight = float(raw_input("Overtime Weight: "))
+            elif selection == '0':
+                print("\n\n... Ο αλγόριθμος εκτελείται... Παρακαλώ περιμένετε!!!")
+                break
+            else:
+              print("Άγνωστη επιλογή!")
+        except ValueError:
+            print("Oops!  That was no valid number.  Try again...")
+    return optimal_fitness, lifetime, popsize, rejection, mutation_probability, \
+           traveltime, surplus_weight, overtime_weight
 
 if __name__ == "__main__":
     main()

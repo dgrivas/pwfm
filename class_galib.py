@@ -28,12 +28,12 @@ class GeAl:
     _total_jobs_nr = 0          # Number of total jobs
     _total_engineer_nr = 0      # Number of total engineers
     _duration_dictionary = {}   # Dictionary with {job_id : job_duration}
-    # _jobs_data = []             # Jobs from db
-    # _engineers_data = []        # Engineers from db
     _skills = []                # Engineers skill
     _travel_time = 0            # Travel time to add on each job duration
     _crossover_engs = 0         # (CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2
     _crossover_jobs = 0         # (CROSSOVER_JOBS * self._total_jobs_nr)
+    _overtime = []
+    _workhours = []
 
     def __init__(self, optimal, lifetime, popsize, traveltime):
         self._max_generations = lifetime
@@ -63,6 +63,8 @@ class GeAl:
         engineers_data = self._db.fetch()
         self._engid_key = [eid[0] for eid in engineers_data]  # get engineer id for key array
         self._skills = [eid[1] for eid in engineers_data]  # get engineers skills
+        self._workhours = [eid[3]-eid[2] for eid in engineers_data]  # get engineers working time
+        self._overtime = [eid[4] for eid in engineers_data]  # get engineers overtime
         #
         self._crossover_engs = int(round((CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2))
         self._crossover_jobs = int(round(CROSSOVER_JOBS * self._total_jobs_nr))
@@ -95,13 +97,12 @@ class GeAl:
         # Calculate worktime for generation
         self._update_generation_worktime()
 
-    def evaluate_population(self, working_time, overtime_weight):
+    def evaluate_population(self, overtime_weight, surplus_weight):
         """
         Evaluate population fitness.
 
         cost = SUM(overtime) x overtime_weight + dispersion
         dispersion = SUM|x-X|/n
-        :param working_time: normal working time
         :param overtime_weight: weight to multiply overtime in fitness function
         :return: max fitness (min cost)
         """
@@ -109,8 +110,8 @@ class GeAl:
         overtime = dispersion = 0
         for ind in range(len(self._generation)):
             # self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
-            overtime, dispersion = self._generation[ind].evaluate(working_time, overtime_weight)
-            self._pop_fitness[ind] = overtime_weight * overtime + dispersion
+            overtime, surplus_labor, dispersion = self._generation[ind].evaluate(self._workhours, self._overtime)
+            self._pop_fitness[ind] = overtime_weight * overtime + surplus_weight * surplus_labor + dispersion
             # print("overtime: %s, Dispersion: %s" % (overtime, dispersion))
             pass
         best_fit = min(self._pop_fitness)
@@ -118,7 +119,7 @@ class GeAl:
         best_assignment = self._generation[best_ind_idx].assignment
         best_worktime =  self._generation[best_ind_idx].worktime
         # return [best_fit, best_assignment, best_worktime]
-        return [best_fit, best_assignment, best_worktime, overtime, dispersion]
+        return [best_fit, best_assignment, best_worktime, overtime, surplus_labor, dispersion]
 
     def prepare_selection(self):
         """
@@ -176,18 +177,16 @@ class GeAl:
         """
         Crossover father & mother, generate offspring.
 
-        CROSSOVER_ENGINEERS = 4
-        CROSSOVER_JOBS = 4
-
-        Από τον γονέα Α, θα επιλέγονται οι n τεχνικοί με το μεγαλύτερο worktime. Από
-        αυτούς θα επιλέγονται x εργασίες, οι οποίες θα αφαιρούνται και θα ανατίθενται σε άλλον
-        τεχνικό του γονέα Α. Η επιλογή του τεχνικού θα γίνεται με βάση τις αναθέσεις που
-        υπάρχουν στον γονέα Β. Το νέο χρωμόσωμα που θα προκύπτει με τις αλλαγές στις
-        αναθέσεις θα περνά στην επόμενη γενιά.
+        Από τον γονέα Α, θα επιλέγονται οι n τεχνικοί με το μεγαλύτερο και το μικρότερο worktime. Από
+        αυτούς με το μεγαλύτερο worktime, θα επιλέγονται x εργασίες απο τον γονέα Α, οι οποίες θα αφαιρούνται
+        και θα ανατίθενται σε άλλον τεχνικό σύμφωνα με τις αναθέσεις του γονέα Β. Γι'αυτούς με το μικρότερο worktime,
+        η επιλογή θα γίνεται απο τον γονέα Β.
+        Το νέο χρωμόσωμα που θα προκύπτει με τις αλλαγές στις αναθέσεις θα περνά στην επόμενη γενιά.
         """
         # Father will become offspring after crossover:
         offspring_assignment = [x for x in self._generation[father].assignment]
         offspring_worktime = [x for x in self._generation[father].worktime]  # range(self._total_engineer_nr)]
+        # print("\nassignment:\n%s\nworktime:\n%s" % (offspring_assignment, offspring_worktime))
         #
         # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
         engineers_h = self._index_sort(offspring_worktime,
@@ -198,31 +197,31 @@ class GeAl:
         # print("\tengs: %s" % engineers)
         engineers_h = [self._engid_key[x] for x in engineers_h]  # get engineer id from index
         engineers_l = [self._engid_key[x] for x in engineers_l]  # get engineer id from index
-        # print("\tengs(id): %s" % engineers)
+        # print("\tengs(id): %s" % engineer)
         #
         # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
         for eng in engineers_h:
-            # Get jobs index for engineer (eng)
-            jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(offspring_assignment))]
+            # Get jobs index for each engineer (eng) from father
+            jobs = [x[0] for x in filter(lambda (i, e): e == eng, enumerate(offspring_assignment))]
             # print("jobs1:%s for engineer:%s" % (jobs, eng))
-            # Get random CROSSOVER_JOBS jobs
+            # Get random CROSSOVER_JOBS jobs from total engineer's jobs
             k = min(self._crossover_jobs, len(jobs))
-            jobs = random.sample(jobs,k)
+            jobs = random.sample(jobs, k)
             # print("jobs:%s" % jobs)
             # Replace job assignments according to mother's assignments:
             for job in jobs:
                 offspring_assignment[job] = self._generation[mother].assignment[job]
                 pass
             pass
-        # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
+        # Select CROSSOVER_JOBS for chosen engineers from mother & insert into offspring assignments
         for eng in engineers_l:
-            # Get jobs index for engineer (eng)
-            jobs = [x[0] for x in filter(lambda (i,e): e == eng, enumerate(self._generation[mother].assignment))]
-            # print("jobs1:%s for engineer:%s" % (jobs, eng))
-            # Get random CROSSOVER_JOBS jobs
+            # Get jobs index for each engineer (eng) from mother
+            jobs = [x[0] for x in filter(lambda (i, e): e == eng, enumerate(self._generation[mother].assignment))]
+            # print("jobs:%s for engineer:%s" % (jobs, eng))
+            # Get random CROSSOVER_JOBS jobs from total engineer's jobs
             k = min(self._crossover_jobs, len(jobs))
-            jobs = random.sample(jobs,k)
-            # print("jobs:%s" % jobs)
+            jobs = random.sample(jobs, k)
+            # print("selected jobs:%s" % jobs)
             # Replace job assignments according to mother's assignments:
             for job in jobs:
                 offspring_assignment[job] = self._generation[mother].assignment[job]
@@ -343,6 +342,8 @@ class Chromosome:
     """
     assignment = []
     worktime = []
+    workhours = []
+    overtime = []
 
     def __init__(self, workforce, jobs):
         # Main chromosome array. Contains selected engineer for each job
@@ -351,7 +352,7 @@ class Chromosome:
         # Array to hold engineer's worktime; updated after each assignment
         self.worktime = [0 for x in range(workforce)]
 
-    def evaluate(self, working_time, overtime_weight):
+    def evaluate(self, eng_workhours, eng_overtime):
         """
         Evaluate Chromosome fitness.
 
@@ -362,16 +363,23 @@ class Chromosome:
         eng_nr = len(self.worktime)
         mean_worktime = sum(self.worktime)/eng_nr
         dispersion = 0
-        overtime = 0
-        for eng in self.worktime:
+        total_overtime = 0
+        total_surplus_labor = 0
+        # print(self.worktime)
+        for assigned_workload, wh, ot in zip(self.worktime, eng_workhours, eng_overtime):
             # Calculate dispersion for each engineer
-            dispersion += abs(eng-mean_worktime)
+            dispersion += abs(assigned_workload-mean_worktime)
             # Calculate overtime
-            overtime += 0 if eng < working_time else eng - working_time
+            total_overtime += 0 if assigned_workload < wh else min(assigned_workload - wh, ot)
+            total_surplus_labor += 0 if assigned_workload < wh + ot else assigned_workload - (wh + ot)
+            # overtime += 0 if eng < working_time else eng - working_time
+            # print("eng:%s, wh:%s, ot:%s, overtime:%s, Surplus:%s" % (assigned_workload, wh, ot, overtime, surplus_labor))
             pass
         dispersion /= eng_nr
-        fitness = overtime_weight * overtime + dispersion
+        # fitness = overtime_weight * total_overtime + dispersion
         # print ("\tengineers: %s,\tmad: %s,\tot:%s,\tfit:%s" % (eng_nr, dispersion, overtime, fitness))
         # return fitness
-        return overtime, dispersion
+        # print(self.worktime)
+        # print ("\tengineers: %s,\tmad: %s,\tot:%s,\tsl:%s" % (eng_nr, dispersion, overtime, surplus_labor))
+        return total_overtime, total_surplus_labor, dispersion
 ########################################################################################################################
