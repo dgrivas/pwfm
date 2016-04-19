@@ -31,6 +31,8 @@ WORKING_TIME = 220
 OVERTIME_WEIGHT = 1.8
 
 """
+MUTATION_DECREASE = 0.001   # Mutation reduction value
+MUTATION_ADAPT_POINT = 0.3    # Mutation correction start (percent of generations)
 
 pop_fit = []
 optimum_fit = []
@@ -58,8 +60,8 @@ def main():
     ga.generate_pop()
     #
     # Evaluate population:
-    (fitness, assignment, worktime, overtime, surplus, dispersion) = \
-        ga.evaluate_population(overtime_weight, surplus_weight)
+    (fitness, assignment, worktime, surplus, overtime, dispersion) = \
+        ga.evaluate_population(surplus_weight, overtime_weight)
     update_plot_data(ga, fitness)
     #
     # Evolution loop:
@@ -87,6 +89,10 @@ def main():
         #
         # Mutation:
         ga.apply_mutation(mutation_probability, newborn=True)
+        # Mutation correction
+        if g > (MUTATION_ADAPT_POINT * lifetime):
+            mutation_probability = max(mutation_probability - MUTATION_DECREASE, MUTATION_DECREASE)
+        print("%s, %s" % (g, mutation_probability))
         #
         # Integrate offsprings into next generation, update worktime:
         ga.update_generation()
@@ -95,20 +101,20 @@ def main():
         ga.clear_nebula()
         #
         # Evaluate population:
-        (fitness, assignment, worktime, overtime, surplus, dispersion) = \
-            ga.evaluate_population(overtime_weight, surplus_weight)
+        (fitness, assignment, worktime, surplus, overtime, dispersion) = \
+            ga.evaluate_population(surplus_weight, overtime_weight)
         # (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
         update_plot_data(ga, fitness)
         pass
     # Print optimum solution
     stop = timeit.default_timer()
-    runtime = stop - start
-    print("\n\nRuntime: %s" % runtime)
+    runtime = round(stop - start, 2)
+    print("\n\nRuntime: %ssec" % runtime)
     print("Optimum fitness: %s, after %s life cycles" % (fitness, g+1))
-    print("Mean worktime: %s" % (sum(worktime)/len(worktime)))
+    print("Mean worktime: %smin" % (sum(worktime)/len(worktime)))
     print("Optimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
     #
-    plot_result(pop_fit, mean_fit, optimum_fit, overtime, surplus, dispersion)
+    plot_result(pop_fit, mean_fit, optimum_fit, surplus, overtime, dispersion, runtime)
 
 
 def update_plot_data(ga, fitness):
@@ -124,7 +130,7 @@ def update_plot_data(ga, fitness):
     mean_fit.append(sum(ga._pop_fitness)/len(ga._pop_fitness))  # Calculate mean fitness
 
 
-def plot_result(population, mean, best, overtime, surplus, dispersion):
+def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
     """
     Plot GA data.
 
@@ -153,7 +159,8 @@ def plot_result(population, mean, best, overtime, surplus, dispersion):
     pf.set_title('Population Fitness Evolution', fontweight='bold', fontsize=12)
     #
     # Create best fitness plot
-    textstr = 'Best fitness: %s\nOvertime: %s\nSurplus: %s\nDispersion: %s' % (min(best), overtime, surplus, dispersion)
+    textstr = 'Best fitness: %s\nSurplus: %smin\nOvertime: %smin\nDispersion: %s\nRuntime: %ssec' % \
+              (min(best), surplus, overtime, dispersion, runtime)
 
     bf = fig.add_subplot(212)
     bf.set_xlim(0, len(population))
@@ -171,12 +178,12 @@ def plot_result(population, mean, best, overtime, surplus, dispersion):
 
 def main_menu():
     optimal_fitness = 10
-    lifetime = 300  # Max GA iterations
+    lifetime = 200  # Max GA iterations
     popsize = 40  # Population size
-    rejection = 0.3  # Population rejection ratio
-    mutation_probability = 0.02  # Mutation probability
+    rejection = 0.4  # Population rejection ratio
+    mutation_probability = 0.06  # Mutation probability
     traveltime = 15
-    surplus_weight = 10.0
+    surplus_weight = 1.0
     overtime_weight = 2.0
     while True:
         os.system('clear')
@@ -212,7 +219,7 @@ def main_menu():
             elif selection == '8':
               overtime_weight = float(raw_input("Overtime Weight: "))
             elif selection == '0':
-                print("\n\n... Ο αλγόριθμος εκτελείται... Παρακαλώ περιμένετε!!!")
+                print("\n\n...Ο αλγόριθμος εκτελείται... Παρακαλώ περιμένετε!!!")
                 break
             else:
               print("Άγνωστη επιλογή!")
@@ -220,6 +227,7 @@ def main_menu():
             print("Oops!  That was no valid number.  Try again...")
     return optimal_fitness, lifetime, popsize, rejection, mutation_probability, \
            traveltime, surplus_weight, overtime_weight
+
 
 if __name__ == "__main__":
     main()

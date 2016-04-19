@@ -64,7 +64,7 @@ class GeAl:
         self._engid_key = [eid[0] for eid in engineers_data]  # get engineer id for key array
         self._skills = [eid[1] for eid in engineers_data]  # get engineers skills
         self._workhours = [eid[3]-eid[2] for eid in engineers_data]  # get engineers working time
-        self._overtime = [eid[4] for eid in engineers_data]  # get engineers overtime
+        self._overtime = [eid[4] for eid in engineers_data]  # get engineers overtime limit
         #
         self._crossover_engs = int(round((CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2))
         self._crossover_jobs = int(round(CROSSOVER_JOBS * self._total_jobs_nr))
@@ -97,21 +97,21 @@ class GeAl:
         # Calculate worktime for generation
         self._update_generation_worktime()
 
-    def evaluate_population(self, overtime_weight, surplus_weight):
+    def evaluate_population(self, surplus_weight, overtime_weight):
         """
         Evaluate population fitness.
 
         cost = SUM(overtime) x overtime_weight + dispersion
         dispersion = SUM|x-X|/n
-        :param overtime_weight: weight to multiply overtime in fitness function
+        :param surplus_weight: weight to multiply overtime in fitness function
         :return: max fitness (min cost)
         """
         # print("\nEvaluate population:")
-        overtime = dispersion = 0
+        surplus_labor = dispersion = 0
         for ind in range(len(self._generation)):
             # self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
-            overtime, surplus_labor, dispersion = self._generation[ind].evaluate(self._workhours, self._overtime)
-            self._pop_fitness[ind] = overtime_weight * overtime + surplus_weight * surplus_labor + dispersion
+            surplus_labor, overtime, dispersion = self._generation[ind].evaluate(self._workhours, self._overtime)
+            self._pop_fitness[ind] = surplus_weight * surplus_labor + overtime_weight * overtime + dispersion
             # print("overtime: %s, Dispersion: %s" % (overtime, dispersion))
             pass
         best_fit = min(self._pop_fitness)
@@ -119,7 +119,7 @@ class GeAl:
         best_assignment = self._generation[best_ind_idx].assignment
         best_worktime =  self._generation[best_ind_idx].worktime
         # return [best_fit, best_assignment, best_worktime]
-        return [best_fit, best_assignment, best_worktime, overtime, surplus_labor, dispersion]
+        return [best_fit, best_assignment, best_worktime, surplus_labor, overtime, dispersion]
 
     def prepare_selection(self):
         """
@@ -363,16 +363,14 @@ class Chromosome:
         eng_nr = len(self.worktime)
         mean_worktime = sum(self.worktime)/eng_nr
         dispersion = 0
-        total_overtime = 0
         total_surplus_labor = 0
-        # print(self.worktime)
+        total_overtime = 0
         for assigned_workload, wh, ot in zip(self.worktime, eng_workhours, eng_overtime):
             # Calculate dispersion for each engineer
             dispersion += abs(assigned_workload-mean_worktime)
             # Calculate overtime
-            total_overtime += 0 if assigned_workload < wh else min(assigned_workload - wh, ot)
-            total_surplus_labor += 0 if assigned_workload < wh + ot else assigned_workload - (wh + ot)
-            # overtime += 0 if eng < working_time else eng - working_time
+            total_surplus_labor += 0 if assigned_workload < wh else min(assigned_workload - wh, ot)
+            total_overtime += 0 if assigned_workload < (wh + ot) else assigned_workload - (wh + ot)
             # print("eng:%s, wh:%s, ot:%s, overtime:%s, Surplus:%s" % (assigned_workload, wh, ot, overtime, surplus_labor))
             pass
         dispersion /= eng_nr
@@ -381,5 +379,5 @@ class Chromosome:
         # return fitness
         # print(self.worktime)
         # print ("\tengineers: %s,\tmad: %s,\tot:%s,\tsl:%s" % (eng_nr, dispersion, overtime, surplus_labor))
-        return total_overtime, total_surplus_labor, dispersion
+        return total_surplus_labor, total_overtime, dispersion
 ########################################################################################################################
