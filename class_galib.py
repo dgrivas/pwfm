@@ -3,12 +3,7 @@ from __future__ import print_function
 from class_db import *
 
 
-CROSSOVER_ENGINEERS = 0.4
-CROSSOVER_JOBS = 0.3
-
 ########################################################################################################################
-
-
 class GeAl:
     """
     Main Genetic Algorithm Methods.
@@ -41,7 +36,7 @@ class GeAl:
         self._pop_size = popsize
         self._travel_time = traveltime
 
-    def prepare_pop(self):
+    def prepare_pop(self, x_over_engineers, x_over_jobs):
         """
         Get data:
             total jobs
@@ -66,8 +61,8 @@ class GeAl:
         self._workhours = [eid[3]-eid[2] for eid in engineers_data]  # get engineers working time
         self._overtime = [eid[4] for eid in engineers_data]  # get engineers overtime limit
         #
-        self._crossover_engs = int(round((CROSSOVER_ENGINEERS * self._total_engineer_nr) / 2))
-        self._crossover_jobs = int(round(CROSSOVER_JOBS * self._total_jobs_nr))
+        self._crossover_engs = int(round((x_over_engineers * self._total_engineer_nr) / 2))
+        self._crossover_jobs = int(round(x_over_jobs * self._total_jobs_nr))
         #
         if (self._total_jobs_nr and self._total_engineer_nr) == 0:
             return False
@@ -84,7 +79,7 @@ class GeAl:
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
         # print ("\nPopulation (size: %s):" % self._pop_size)
-        for ind in range(len(self._generation)):
+        for ind in range(self._pop_size):
             for gene in range(len(self._generation[ind].assignment)):
                 # get job id from index
                 jid = self._jobid_key[gene]
@@ -107,19 +102,23 @@ class GeAl:
         :return: max fitness (min cost)
         """
         # print("\nEvaluate population:")
-        surplus_labor = dispersion = 0
-        for ind in range(len(self._generation)):
+        best_wt = [(0, 0) for x in range(self._pop_size)]
+        # surplus_labor = dispersion = 0
+        for ind in range(self._pop_size):
             # self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
             surplus_labor, overtime, dispersion = self._generation[ind].evaluate(self._workhours, self._overtime)
             self._pop_fitness[ind] = surplus_weight * surplus_labor + overtime_weight * overtime + dispersion
+            best_wt[ind] = (surplus_labor, overtime, dispersion)
             # print("overtime: %s, Dispersion: %s" % (overtime, dispersion))
             pass
         best_fit = min(self._pop_fitness)
         best_ind_idx = self._pop_fitness.index(best_fit)
         best_assignment = self._generation[best_ind_idx].assignment
-        best_worktime =  self._generation[best_ind_idx].worktime
-        # return [best_fit, best_assignment, best_worktime]
-        return [best_fit, best_assignment, best_worktime, surplus_labor, overtime, dispersion]
+        best_worktime = self._generation[best_ind_idx].worktime
+        (sl, ot, dp) = best_wt[best_ind_idx]
+        # print(best_wt)
+        print("\t\tsurplus:%s, overtime:%s, dispersion:%s" % (sl, ot, dp))
+        return [best_fit, best_assignment, best_worktime, sl, ot, dp]
 
     def prepare_selection(self):
         """
@@ -128,16 +127,17 @@ class GeAl:
         :param pop_rejection: population rejection percent
         :return: Individuals selected for crossover
         """
-        # prepare selection probability for population
-        fitness_sum = sum(self._pop_fitness)
+        # Prepare selection probability for population
+        # Invert fitness value to calculate selection probability
+        inv_fitness = [1/(1+x) for x in self._pop_fitness]
+        fitness_sum = sum(inv_fitness)
         x2 = 0
-        for ind in range(len(self._generation)):
-            x1 = float(self._pop_fitness[ind]) / float(fitness_sum)
+        for ind in range(self._pop_size):
+            x1 = float(inv_fitness[ind]) / float(fitness_sum)
             x2 += x1
             # print("x1: %s, x2: %s" % (x1, float(x2)))
             self._selection_pi[ind] = x2
             pass
-        # print(self._selection_pi)
 
     def select(self):
         """
@@ -151,6 +151,8 @@ class GeAl:
         parents = (parentA, self._pop_fitness[parentA]), (parentB, self._pop_fitness[parentB])
         parents = sorted(parents, key=lambda f: f[1])  # sort parents by fitness
         # return parents
+        # p = [x[0] for x in parents]
+        # print("parents: %s" % p)
         return [x[0] for x in parents]
 
     def _roulette(self):

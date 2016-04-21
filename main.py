@@ -9,30 +9,12 @@ import timeit
 import os
 import sys
 
-'''
-OPTIMAL_FITNESS = 10
-LIFETIME = 300  # Max GA iterations
-POPSIZE = 40  # Population size
-REJECTION = 0.3  # Population rejection ratio
-MUTATION_PROBABILITY = 0.02  # Mutation probability
-TRAVELTIME = 15
-WORKING_TIME = 220
-OVERTIME_WEIGHT = 20.0
-'''
-
-"""
-OPTIMAL_FITNESS = 35
-LIFETIME = 300  # Max GA iterations
-POPSIZE = 40  # Population size
-REJECTION = 0.3  # Population rejection ratio
-MUTATION_PROBABILITY = 0.01  # Mutation probability
-TRAVELTIME = 15
-WORKING_TIME = 220
-OVERTIME_WEIGHT = 1.8
-
-"""
 MUTATION_DECREASE = 0.001   # Mutation reduction value
 MUTATION_ADAPT_POINT = 0.3    # Mutation correction start (percent of generations)
+
+CROSSOVER_ENGINEERS = 0.4
+CROSSOVER_JOBS = 0.3
+
 
 pop_fit = []
 optimum_fit = []
@@ -55,7 +37,7 @@ def main():
     # ga.set_travel_time(TRAVELTIME)
     #
     # Prepare data for population (get total jobs, engineers from db):
-    ga.prepare_pop()
+    ga.prepare_pop(CROSSOVER_ENGINEERS, CROSSOVER_JOBS)
     # Generate new population of random chromosomes:
     ga.generate_pop()
     #
@@ -177,7 +159,7 @@ def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
     plt.show()
 
 def main_menu():
-    optimal_fitness = 10
+    optimal_fitness = 16
     lifetime = 200  # Max GA iterations
     popsize = 40  # Population size
     rejection = 0.4  # Population rejection ratio
@@ -193,12 +175,12 @@ def main_menu():
         print("\n\t[1]  Optimal Fitness (%s)"
               "\n\t[2]  Lifetime (%s)"
               "\n\t[3]  Population Size (%s)"
-              "\n\t[4]  Rejection (%s)"
-              "\n\t[5]  Mutation Probability (%s)"
+              "\n\t[4]  Mutation Probability (%s)"
+              "\n\t[5]  Rejection Ratio (%s)"
               "\n\t[6]  Travel Time (%s)"
               "\n\t[7]  Surplus Weight (%s)"
               "\n\t[8]  Overtime Weight (%s)"
-              "\n\n\t[0]  Εκτέλεση αλγορίθμου" % (optimal_fitness, lifetime, popsize, rejection, mutation_probability,
+              "\n\n\t[0]  Εκτέλεση αλγορίθμου" % (optimal_fitness, lifetime, popsize, mutation_probability, rejection,
                                                   traveltime, surplus_weight, overtime_weight))
         try:
             selection = raw_input("\nΕπιλέξτε παράμετρο: ")
@@ -209,9 +191,9 @@ def main_menu():
             elif selection == '3':
               popsize = int(raw_input("Population Size: "))
             elif selection == '4':
-              rejection = float(raw_input("Rejection: "))
-            elif selection == '5':
               mutation_probability = float(raw_input("Mutation Probability: "))
+            elif selection == '5':
+              rejection = float(raw_input("Rejection Ratio: "))
             elif selection == '6':
               traveltime = int(raw_input("Travel Time: "))
             elif selection == '7':
