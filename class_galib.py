@@ -35,6 +35,8 @@ class GeAl:
         self._optimal_fitness = optimal
         self._pop_size = popsize
         self._travel_time = traveltime
+        self._pop_fitness = [0 for x in range(self._pop_size)]  # Init fitness array
+        self._selection_pi = [0 for x in range(self._pop_size)]  # Init selection probability array
 
     def prepare_pop(self, x_over_engineers, x_over_jobs):
         """
@@ -45,8 +47,6 @@ class GeAl:
         Create key arrays for Job's & Engineer's id
         :return: False if no records found, True otherwise
         """
-        self._pop_fitness = [0 for x in range(self._pop_size)]  # Init fitness array
-        self._selection_pi = [0 for x in range(self._pop_size)]  # Init selection probability array
         self._db = DataBase()
         self._total_jobs_nr = self._db.query("Select * from job")
         jobs_data = self._db.fetch()
@@ -78,6 +78,8 @@ class GeAl:
         # Generate empty population
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
+        # Update Chromosomes engineers workhours & overtime limits (Class variables for all instances
+        self._generation[0].append_eng_data(self._workhours, self._overtime):
         # print ("\nPopulation (size: %s):" % self._pop_size)
         for ind in range(self._pop_size):
             for gene in range(len(self._generation[ind].assignment)):
@@ -106,7 +108,7 @@ class GeAl:
         # surplus_labor = dispersion = 0
         for ind in range(self._pop_size):
             # self._pop_fitness[ind] = self._generation[ind].evaluate(working_time, overtime_weight)
-            surplus_labor, overtime, dispersion = self._generation[ind].evaluate(self._workhours, self._overtime)
+            surplus_labor, overtime, dispersion = self._generation[ind].evaluate()
             self._pop_fitness[ind] = surplus_weight * surplus_labor + overtime_weight * overtime + dispersion
             best_wt[ind] = (surplus_labor, overtime, dispersion)
             # print("overtime: %s, Dispersion: %s" % (overtime, dispersion))
@@ -354,7 +356,11 @@ class Chromosome:
         # Array to hold engineer's worktime; updated after each assignment
         self.worktime = [0 for x in range(workforce)]
 
-    def evaluate(self, eng_workhours, eng_overtime):
+    def append_eng_data(self, eng_workhours, eng_overtime):
+        self.workhours = eng_workhours
+        self.overtime = eng_overtime
+
+    def evaluate(self):
         """
         Evaluate Chromosome fitness.
 
@@ -367,7 +373,7 @@ class Chromosome:
         dispersion = 0
         total_surplus_labor = 0
         total_overtime = 0
-        for assigned_workload, wh, ot in zip(self.worktime, eng_workhours, eng_overtime):
+        for assigned_workload, wh, ot in zip(self.worktime, self.workhours, self.overtime):
             # Calculate dispersion for each engineer
             dispersion += abs(assigned_workload-mean_worktime)
             # Calculate overtime
