@@ -340,9 +340,10 @@ class Chromosome:
     """
     chromosome structure definition.
 
-    Chromosome elements: array assignment, len = No of Jobs, value = assignment to engineer
-                        array worktime,    len = No of engineers, value = engineers total worktime
-                        # array fitness,     len = No of engineers, value = fitness of chromosome
+    Chromosome elements: array assignment, len = Nr of Jobs, values = assignment to engineer
+                        array worktime,    len = Nr of engineers, values = engineers total worktime
+                        array workhours,   len = Nr of engineers, values = typical working time
+                        array overtime,    len = Nr of engineers, values = overtime limits
     """
     assignment = []
     worktime = []
