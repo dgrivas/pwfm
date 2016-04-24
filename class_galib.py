@@ -177,7 +177,7 @@ class GeAl:
         """
         return self._index_sort(self._pop_fitness, inds_nr)
 
-    def crossover(self, father, mother, offspring):
+    def crossover(self, mother, father, offspring):
         """
         Crossover father & mother, generate offspring.
 
@@ -187,15 +187,15 @@ class GeAl:
         η επιλογή θα γίνεται απο τον γονέα Β.
         Το νέο χρωμόσωμα που θα προκύπτει με τις αλλαγές στις αναθέσεις θα περνά στην επόμενη γενιά.
         """
-        # Father will become offspring after crossover:
-        offspring_assignment = [x for x in self._generation[father].assignment]
-        offspring_worktime = [x for x in self._generation[father].worktime]  # range(self._total_engineer_nr)]
+        # Mother will become offspring after crossover:
+        offspring_assignment = [x for x in self._generation[mother].assignment]
+        offspring_worktime = [x for x in self._generation[mother].worktime]  # range(self._total_engineer_nr)]
         # print("\nassignment:\n%s\nworktime:\n%s" % (offspring_assignment, offspring_worktime))
         #
-        # Get CROSSOVER_ENGINEERS/2 with highest worktime from father:
+        # Get CROSSOVER_ENGINEERS/2 with highest worktime from mother:
         engineers_h = self._index_sort(offspring_worktime,
                                      top=self._crossover_engs)
-        # Get CROSSOVER_ENGINEERS/2 with lowest worktime from father:
+        # Get CROSSOVER_ENGINEERS/2 with lowest worktime from mother:
         engineers_l = (self._index_sort(offspring_worktime,
                                      top=self._crossover_engs, rev=False))
         # print("\tengs: %s" % engineers)
@@ -203,32 +203,32 @@ class GeAl:
         engineers_l = [self._engid_key[x] for x in engineers_l]  # get engineer id from index
         # print("\tengs(id): %s" % engineer)
         #
-        # Select CROSSOVER_JOBS for chosen engineers from father & replace assignments according to mother's
+        # Select CROSSOVER_JOBS for chosen engineers from mother & replace assignments according to father's
         for eng in engineers_h:
-            # Get jobs index for each engineer (eng) from father
+            # Get jobs index for each engineer (eng) from mother
             jobs = [x[0] for x in filter(lambda (i, e): e == eng, enumerate(offspring_assignment))]
             # print("jobs1:%s for engineer:%s" % (jobs, eng))
             # Get random CROSSOVER_JOBS jobs from total engineer's jobs
             k = min(self._crossover_jobs, len(jobs))
             jobs = random.sample(jobs, k)
             # print("jobs:%s" % jobs)
-            # Replace job assignments according to mother's assignments:
+            # Replace job assignments according to father's assignments:
             for job in jobs:
-                offspring_assignment[job] = self._generation[mother].assignment[job]
+                offspring_assignment[job] = self._generation[father].assignment[job]
                 pass
             pass
-        # Select CROSSOVER_JOBS for chosen engineers from mother & insert into offspring assignments
+        # Select CROSSOVER_JOBS for chosen engineers from father & insert into offspring assignments
         for eng in engineers_l:
-            # Get jobs index for each engineer (eng) from mother
-            jobs = [x[0] for x in filter(lambda (i, e): e == eng, enumerate(self._generation[mother].assignment))]
+            # Get jobs index for each engineer (eng) from father
+            jobs = [x[0] for x in filter(lambda (i, e): e == eng, enumerate(self._generation[father].assignment))]
             # print("jobs:%s for engineer:%s" % (jobs, eng))
             # Get random CROSSOVER_JOBS jobs from total engineer's jobs
             k = min(self._crossover_jobs, len(jobs))
             jobs = random.sample(jobs, k)
             # print("selected jobs:%s" % jobs)
-            # Replace job assignments according to mother's assignments:
+            # Replace job assignments according to father's assignments:
             for job in jobs:
-                offspring_assignment[job] = self._generation[mother].assignment[job]
+                offspring_assignment[job] = self._generation[father].assignment[job]
                 pass
             pass
         #
