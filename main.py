@@ -11,7 +11,7 @@ import sys
 
 MUTATION_DECREASE = 0.001   # Mutation reduction value
 MUTATION_ADAPT_POINT = 0.3    # Mutation correction start (percent of generations)
-
+FINAL_MUTATION = 0.001
 CROSSOVER_ENGINEERS = 0.4
 CROSSOVER_JOBS = 0.3
 
@@ -73,7 +73,7 @@ def main():
         ga.apply_mutation(mutation_probability, newborn=True)
         # Mutation correction
         if g > (MUTATION_ADAPT_POINT * lifetime):
-            mutation_probability = max(mutation_probability - MUTATION_DECREASE, MUTATION_DECREASE)
+            mutation_probability = max(mutation_probability - MUTATION_DECREASE, FINAL_MUTATION)
         print("%s, %s" % (g, mutation_probability))
         #
         # Integrate offsprings into next generation, update worktime:
