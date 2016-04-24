@@ -320,7 +320,7 @@ class GeAl:
         print("\nGeneration fitness:")
         print("\t%s" % self._pop_fitness)
 
-    def _index_sort(self, unsorted, top, key=1, rev=True):
+    def _index_sort(self, unsorted, top, s_key=1, rev=True):
         """
         Sort list with index, return top values.
 
@@ -329,7 +329,7 @@ class GeAl:
         # engineers = [x[0] for x in engineers[:CROSSOVER_ENGINEERS]]
         """
         sorted_list = [(i, unsorted[i]) for i in range(len(unsorted))]
-        sorted_list = sorted(sorted_list, key=lambda f: f[key], reverse=rev)  # sort sorted_list by key
+        sorted_list = sorted(sorted_list, key=lambda f: f[s_key], reverse=rev)  # sort sorted_list by key
         sorted_list = [x[0] for x in sorted_list[:top]]
         return sorted_list
 
