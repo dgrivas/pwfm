@@ -76,10 +76,14 @@ class GeAl:
         :return:
         """
         # Generate empty population
+
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
         # Update Chromosomes engineers workhours & overtime limits (Class variables for all instances
-        self._generation[0].append_eng_data(self._workhours, self._overtime):
+        # for ind in self._generation:
+        #     ind.append_eng_data(self._workhours, self._overtime)
+        # ot = [0 for x in range(self._pop_size)]
+        self._generation[0].append_eng_data(self._workhours, self._overtime)
         # print ("\nPopulation (size: %s):" % self._pop_size)
         for ind in range(self._pop_size):
             for gene in range(len(self._generation[ind].assignment)):
@@ -314,6 +318,7 @@ class GeAl:
         for i,x in enumerate(self._generation):
             print("%s\t%s" % (i, x.assignment))
             print("\t%s" % x.worktime)
+            print("\t%s" % x.overtime)
             pass
 
     def print_pop_fitness(self):
@@ -358,8 +363,8 @@ class Chromosome:
         self.worktime = [0 for x in range(workforce)]
 
     def append_eng_data(self, eng_workhours, eng_overtime):
-        self.workhours = eng_workhours
-        self.overtime = eng_overtime
+        self.workhours[:] = eng_workhours
+        self.overtime[:] = eng_overtime
 
     def evaluate(self):
         """

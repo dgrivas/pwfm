@@ -40,6 +40,7 @@ def main():
     ga.prepare_pop(CROSSOVER_ENGINEERS, CROSSOVER_JOBS)
     # Generate new population of random chromosomes:
     ga.generate_pop()
+    ga.print_generation()
     #
     # Evaluate population:
     (fitness, assignment, worktime, surplus, overtime, dispersion) = \
