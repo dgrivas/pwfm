@@ -80,9 +80,6 @@ class GeAl:
         self._generation = [Chromosome(self._total_engineer_nr, self._total_jobs_nr)
                             for x in range(self._pop_size)]
         # Update Chromosomes engineers workhours & overtime limits (Class variables for all instances
-        # for ind in self._generation:
-        #     ind.append_eng_data(self._workhours, self._overtime)
-        # ot = [0 for x in range(self._pop_size)]
         self._generation[0].append_eng_data(self._workhours, self._overtime)
         # print ("\nPopulation (size: %s):" % self._pop_size)
         for ind in range(self._pop_size):
@@ -123,7 +120,7 @@ class GeAl:
         best_worktime = self._generation[best_ind_idx].worktime
         (sl, ot, dp) = best_wt[best_ind_idx]
         # print(best_wt)
-        print("\t\tsurplus:%s, overtime:%s, dispersion:%s" % (sl, ot, dp))
+        print("surplus: %s,\tovertime: %s,\tdispersion: %s" % (sl, ot, dp))
         return [best_fit, best_assignment, best_worktime, sl, ot, dp]
 
     def prepare_selection(self):

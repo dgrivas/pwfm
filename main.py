@@ -11,7 +11,7 @@ import sys
 
 MUTATION_DECREASE = 0.001   # Mutation reduction value
 MUTATION_ADAPT_POINT = 0.3    # Mutation correction start (percent of generations)
-FINAL_MUTATION = 0.001
+FINAL_MUTATION = 0.005
 CROSSOVER_ENGINEERS = 0.4
 CROSSOVER_JOBS = 0.3
 
@@ -26,7 +26,7 @@ def main():
     optimal_fitness, lifetime, popsize, rejection, mutation_probability, \
            traveltime, surplus_weight, overtime_weight = main_menu()
 
-    print("Initializing...", end='\r')
+    print("Initializing...")
     sys.stdout.flush()
 
     # Initialize timer
@@ -40,17 +40,18 @@ def main():
     ga.prepare_pop(CROSSOVER_ENGINEERS, CROSSOVER_JOBS)
     # Generate new population of random chromosomes:
     ga.generate_pop()
-    ga.print_generation()
-    #
-    # Evaluate population:
-    (fitness, assignment, worktime, surplus, overtime, dispersion) = \
-        ga.evaluate_population(surplus_weight, overtime_weight)
-    update_plot_data(ga, fitness)
     #
     # Evolution loop:
     for g in range(lifetime):
-        print("Evolution: %s" % g, end='\r')
+        print("Evolution: %s,\tmutation probability: %s" % (g, mutation_probability), end=",\t")
         sys.stdout.flush()
+        #
+        # Evaluate population:
+        (fitness, assignment, worktime, surplus, overtime, dispersion) = \
+            ga.evaluate_population(surplus_weight, overtime_weight)
+        update_plot_data(ga, fitness)
+        #
+        # Check optimal fitness
         if fitness < optimal_fitness:
             g -= 1
             break
@@ -75,19 +76,13 @@ def main():
         # Mutation correction
         if g > (MUTATION_ADAPT_POINT * lifetime):
             mutation_probability = max(mutation_probability - MUTATION_DECREASE, FINAL_MUTATION)
-        print("%s, %s" % (g, mutation_probability))
+        # print("%s, %s" % (g, mutation_probability))
         #
         # Integrate offsprings into next generation, update worktime:
         ga.update_generation()
         #
         # Clear nebula for next generation
         ga.clear_nebula()
-        #
-        # Evaluate population:
-        (fitness, assignment, worktime, surplus, overtime, dispersion) = \
-            ga.evaluate_population(surplus_weight, overtime_weight)
-        # (fitness, assignment, worktime) = ga.evaluate_population(WORKING_TIME, OVERTIME_WEIGHT)
-        update_plot_data(ga, fitness)
         pass
     # Print optimum solution
     stop = timeit.default_timer()
@@ -97,7 +92,7 @@ def main():
     print("Mean worktime: %smin" % (sum(worktime)/len(worktime)))
     print("Optimum solution:\nAssigment:\n%s\nEngineer Worktime:\n%s" % (assignment, worktime))
     #
-    plot_result(pop_fit, mean_fit, optimum_fit, surplus, overtime, dispersion, runtime)
+    plot_result(surplus, overtime, dispersion, runtime)
 
 
 def update_plot_data(ga, fitness):
@@ -113,14 +108,10 @@ def update_plot_data(ga, fitness):
     mean_fit.append(sum(ga._pop_fitness)/len(ga._pop_fitness))  # Calculate mean fitness
 
 
-def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
+def plot_result(surplus, overtime, dispersion, runtime):
     """
     Plot GA data.
 
-    :param population:
-    :param mean:
-    :param best:
-    :return:
     """
     fig = plt.figure()
     #
@@ -131,11 +122,11 @@ def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
     #
     # create vertical population fitness plot
     pf = fig.add_subplot(211)
-    pf.set_xlim(0, len(population))
-    pf.eventplot(population, colors=colors, lineoffsets=lineoffsets,
-                  linelengths=linelengths, orientation='vertical')
+    pf.set_xlim(0, len(pop_fit))
+    pf.eventplot(pop_fit, colors=colors, lineoffsets=lineoffsets,
+                 linelengths=linelengths, orientation='vertical')
     # Plot mean fitness
-    pf.plot(mean, label='Mean Fitness')
+    pf.plot(mean_fit, label='Mean Fitness')
     pf.legend(loc='best', fancybox=True, framealpha=0.5)
     pf.set_ylabel('Fitness')
     pf.set_xlabel('Generations')
@@ -143,10 +134,10 @@ def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
     #
     # Create best fitness plot
     textstr = 'Best fitness: %s\nSurplus: %smin\nOvertime: %smin\nDispersion: %s\nRuntime: %ssec' % \
-              (min(best), surplus, overtime, dispersion, runtime)
+              (min(optimum_fit), surplus, overtime, dispersion, runtime)
 
     bf = fig.add_subplot(212)
-    bf.set_xlim(0, len(population))
+    bf.set_xlim(0, len(pop_fit))
     bf.set_ylabel('Fitness')
     bf.set_xlabel('Generations')
     bf.set_title('Best Fitness', fontweight='bold', fontsize=12)
@@ -154,13 +145,13 @@ def plot_result(population, mean, best, surplus, overtime, dispersion, runtime):
     props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
     bf.text(0.95, 0.95, textstr, transform=bf.transAxes, fontsize=10,
         va='top', ha='right',  bbox=props)
-    bf.plot(best)
+    bf.plot(optimum_fit)
     #
     plt.tight_layout()
     plt.show()
 
 def main_menu():
-    optimal_fitness = 16
+    optimal_fitness = 12
     lifetime = 200  # Max GA iterations
     popsize = 40  # Population size
     rejection = 0.4  # Population rejection ratio
